@@ -36,3 +36,6 @@ release
 *.exe
 *.out
 *.app
+
+build*/
+VulkanSDK/
