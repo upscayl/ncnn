@@ -8,7 +8,6 @@
 #include <filesystem>
 namespace fs = std::filesystem;
 
-
 #if _WIN32
 // image decoder and encoder with wic
 #include "wic_image.h"
@@ -41,15 +40,15 @@ int getNumCpuCores()
 
 #if _WIN32
 #include <wchar.h>
-static wchar_t* optarg = NULL;
+static wchar_t *optarg = NULL;
 static int optind = 1;
-static wchar_t getopt(int argc, wchar_t* const argv[], const wchar_t* optstring)
+static wchar_t getopt(int argc, wchar_t *const argv[], const wchar_t *optstring)
 {
     if (optind >= argc || argv[optind][0] != L'-')
         return -1;
 
     wchar_t opt = argv[optind][1];
-    const wchar_t* p = wcschr(optstring, opt);
+    const wchar_t *p = wcschr(optstring, opt);
     if (p == NULL)
         return L'?';
 
@@ -69,12 +68,12 @@ static wchar_t getopt(int argc, wchar_t* const argv[], const wchar_t* optstring)
     return opt;
 }
 
-static std::vector<int> parse_optarg_int_array(const wchar_t* optarg)
+static std::vector<int> parse_optarg_int_array(const wchar_t *optarg)
 {
     std::vector<int> array;
     array.push_back(_wtoi(optarg));
 
-    const wchar_t* p = wcschr(optarg, L',');
+    const wchar_t *p = wcschr(optarg, L',');
     while (p)
     {
         p++;
@@ -84,15 +83,15 @@ static std::vector<int> parse_optarg_int_array(const wchar_t* optarg)
 
     return array;
 }
-#else // _WIN32
+#else               // _WIN32
 #include <unistd.h> // getopt()
 
-static std::vector<int> parse_optarg_int_array(const char* optarg)
+static std::vector<int> parse_optarg_int_array(const char *optarg)
 {
     std::vector<int> array;
     array.push_back(atoi(optarg));
 
-    const char* p = strchr(optarg, ',');
+    const char *p = strchr(optarg, ',');
     while (p)
     {
         p++;
@@ -102,7 +101,7 @@ static std::vector<int> parse_optarg_int_array(const char* optarg)
 
     return array;
 }
-#endif // _WIN32
+#endif              // _WIN32
 
 // ncnn
 #include "cpu.h"
@@ -150,11 +149,11 @@ public:
     {
     }
 
-    void put(const Task& v)
+    void put(const Task &v)
     {
         lock.lock();
         int numCpuCores = getNumCpuCores() * 2;
-        fprintf(stderr, "numCpuCores: %d\n", numCpuCores);
+        fprintf(stderr, "numCpuCores: %d\n", getNumCpuCores());
         while (tasks.size() >= numCpuCores) // FIXME hardcode queue length
         {
             condition.wait(lock);
@@ -167,7 +166,7 @@ public:
         condition.signal();
     }
 
-    void get(Task& v)
+    void get(Task &v)
     {
         lock.lock();
 
@@ -204,39 +203,39 @@ public:
     std::vector<path_t> output_files;
 };
 
-void* load(void* args)
+void *load(void *args)
 {
-    const LoadThreadParams* ltp = (const LoadThreadParams*)args;
+    const LoadThreadParams *ltp = (const LoadThreadParams *)args;
     const int count = ltp->input_files.size();
     const int scale = ltp->scale;
 
-    #pragma omp parallel for schedule(static,1) num_threads(ltp->jobs_load)
-    for (int i=0; i<count; i++)
+#pragma omp parallel for schedule(static, 1) num_threads(ltp->jobs_load)
+    for (int i = 0; i < count; i++)
     {
-        const path_t& imagepath = ltp->input_files[i];
+        const path_t &imagepath = ltp->input_files[i];
 
         int webp = 0;
 
-        unsigned char* pixeldata = 0;
+        unsigned char *pixeldata = 0;
         int w;
         int h;
         int c;
 
 #if _WIN32
-        FILE* fp = _wfopen(imagepath.c_str(), L"rb");
+        FILE *fp = _wfopen(imagepath.c_str(), L"rb");
 #else
-        FILE* fp = fopen(imagepath.c_str(), "rb");
+        FILE *fp = fopen(imagepath.c_str(), "rb");
 #endif
         if (fp)
         {
             // read whole file
-            unsigned char* filedata = 0;
+            unsigned char *filedata = 0;
             int length = 0;
             {
                 fseek(fp, 0, SEEK_END);
                 length = ftell(fp);
                 rewind(fp);
-                filedata = (unsigned char*)malloc(length);
+                filedata = (unsigned char *)malloc(length);
                 if (filedata)
                 {
                     fread(filedata, 1, length, fp);
@@ -256,7 +255,7 @@ void* load(void* args)
                     // not webp, try jpg png etc.
 #if _WIN32
                     pixeldata = wic_decode_image(imagepath.c_str(), &w, &h, &c);
-#else // _WIN32
+#else  // _WIN32
                     pixeldata = stbi_load_from_memory(filedata, length, &w, &h, &c, 0);
                     if (pixeldata)
                     {
@@ -289,7 +288,7 @@ void* load(void* args)
             v.inpath = imagepath;
             v.outpath = ltp->output_files[i];
 
-            v.inimage = ncnn::Mat(w, h, (void*)pixeldata, (size_t)c, c);
+            v.inimage = ncnn::Mat(w, h, (void *)pixeldata, (size_t)c, c);
             v.outimage = ncnn::Mat(w * scale, h * scale, (size_t)c, c);
 
             path_t ext = get_file_extension(v.outpath);
@@ -299,7 +298,7 @@ void* load(void* args)
                 v.outpath = output_filename2;
 #if _WIN32
                 fwprintf(stderr, L"image %ls has alpha channel ! %ls will output %ls\n", imagepath.c_str(), imagepath.c_str(), output_filename2.c_str());
-#else // _WIN32
+#else  // _WIN32
                 fprintf(stderr, "image %s has alpha channel ! %s will output %s\n", imagepath.c_str(), imagepath.c_str(), output_filename2.c_str());
 #endif // _WIN32
             }
@@ -310,7 +309,7 @@ void* load(void* args)
         {
 #if _WIN32
             fwprintf(stderr, L"decode image %ls failed\n", imagepath.c_str());
-#else // _WIN32
+#else  // _WIN32
             fprintf(stderr, "decode image %s failed\n", imagepath.c_str());
 #endif // _WIN32
         }
@@ -322,13 +321,13 @@ void* load(void* args)
 class ProcThreadParams
 {
 public:
-    const RealESRGAN* realesrgan;
+    const RealESRGAN *realesrgan;
 };
 
-void* proc(void* args)
+void *proc(void *args)
 {
-    const ProcThreadParams* ptp = (const ProcThreadParams*)args;
-    const RealESRGAN* realesrgan = ptp->realesrgan;
+    const ProcThreadParams *ptp = (const ProcThreadParams *)args;
+    const RealESRGAN *realesrgan = ptp->realesrgan;
 
     for (;;)
     {
@@ -353,9 +352,9 @@ public:
     int verbose;
 };
 
-void* save(void* args)
+void *save(void *args)
 {
-    const SaveThreadParams* stp = (const SaveThreadParams*)args;
+    const SaveThreadParams *stp = (const SaveThreadParams *)args;
     const int verbose = stp->verbose;
 
     for (;;)
@@ -369,7 +368,7 @@ void* save(void* args)
 
         // free input pixel data
         {
-            unsigned char* pixeldata = (unsigned char*)v.inimage.data;
+            unsigned char *pixeldata = (unsigned char *)v.inimage.data;
             if (v.webp == 1)
             {
                 free(pixeldata);
@@ -391,14 +390,15 @@ void* save(void* args)
         /* ----------- Create folder if not exists -------------------*/
         fs::path fs_path = fs::absolute(v.outpath);
         std::string parent_path = fs_path.parent_path().string();
-        if (fs::exists(parent_path) != 1){
+        if (fs::exists(parent_path) != 1)
+        {
             std::cout << "Create folder: [" << parent_path << "]." << std::endl;
             fs::create_directories(parent_path);
         }
 
         if (ext == PATHSTR("webp") || ext == PATHSTR("WEBP"))
         {
-            success = webp_save(v.outpath.c_str(), v.outimage.w, v.outimage.h, v.outimage.elempack, (const unsigned char*)v.outimage.data);
+            success = webp_save(v.outpath.c_str(), v.outimage.w, v.outimage.h, v.outimage.elempack, (const unsigned char *)v.outimage.data);
         }
         else if (ext == PATHSTR("png") || ext == PATHSTR("PNG"))
         {
@@ -442,11 +442,10 @@ void* save(void* args)
     return 0;
 }
 
-
 #if _WIN32
-int wmain(int argc, wchar_t** argv)
+int wmain(int argc, wchar_t **argv)
 #else
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 #endif
 {
     path_t inputpath;
@@ -510,7 +509,7 @@ int main(int argc, char** argv)
             return -1;
         }
     }
-#else // _WIN32
+#else  // _WIN32
     int opt;
     while ((opt = getopt(argc, argv, "i:o:s:t:m:n:g:j:f:vxh")) != -1)
     {
@@ -570,7 +569,7 @@ int main(int argc, char** argv)
         return -1;
     }
 
-    for (int i=0; i<(int)tilesize.size(); i++)
+    for (int i = 0; i < (int)tilesize.size(); i++)
     {
         if (tilesize[i] != 0 && tilesize[i] < 32)
         {
@@ -591,7 +590,7 @@ int main(int argc, char** argv)
         return -1;
     }
 
-    for (int i=0; i<(int)jobs_proc.size(); i++)
+    for (int i = 0; i < (int)jobs_proc.size(); i++)
     {
         if (jobs_proc[i] < 1)
         {
@@ -647,7 +646,7 @@ int main(int argc, char** argv)
 
             path_t last_filename;
             path_t last_filename_noext;
-            for (int i=0; i<count; i++)
+            for (int i = 0; i < count; i++)
             {
                 path_t filename = filenames[i];
                 path_t filename_noext = get_file_name_without_extension(filename);
@@ -688,8 +687,7 @@ int main(int argc, char** argv)
 
     int prepadding = 0;
 
-    if (model.find(PATHSTR("models")) != path_t::npos
-        || model.find(PATHSTR("models2")) != path_t::npos)
+    if (model.find(PATHSTR("models")) != path_t::npos || model.find(PATHSTR("models2")) != path_t::npos)
     {
         prepadding = 10;
     }
@@ -718,7 +716,8 @@ int main(int argc, char** argv)
         swprintf(parampath, 256, L"%s/%s-x%s.param", model.c_str(), modelname.c_str(), std::to_string(scale));
         swprintf(modelpath, 256, L"%s/%s-x%s.bin", model.c_str(), modelname.c_str(), std::to_string(scale));
     }
-    else{
+    else
+    {
         swprintf(parampath, 256, L"%s/%s.param", model.c_str(), modelname.c_str());
         swprintf(modelpath, 256, L"%s/%s.bin", model.c_str(), modelname.c_str());
     }
@@ -732,7 +731,8 @@ int main(int argc, char** argv)
         sprintf(parampath, "%s/%s-x%s.param", model.c_str(), modelname.c_str(), std::to_string(scale).c_str());
         sprintf(modelpath, "%s/%s-x%s.bin", model.c_str(), modelname.c_str(), std::to_string(scale).c_str());
     }
-    else{
+    else
+    {
         sprintf(parampath, "%s/%s.param", model.c_str(), modelname.c_str());
         sprintf(modelpath, "%s/%s.bin", model.c_str(), modelname.c_str());
     }
@@ -769,7 +769,7 @@ int main(int argc, char** argv)
     jobs_save = std::min(jobs_save, cpu_count);
 
     int gpu_count = ncnn::get_gpu_count();
-    for (int i=0; i<use_gpu_count; i++)
+    for (int i = 0; i < use_gpu_count; i++)
     {
         if (gpuid[i] < 0 || gpuid[i] >= gpu_count)
         {
@@ -781,14 +781,14 @@ int main(int argc, char** argv)
     }
 
     int total_jobs_proc = 0;
-    for (int i=0; i<use_gpu_count; i++)
+    for (int i = 0; i < use_gpu_count; i++)
     {
         int gpu_queue_count = ncnn::get_gpu_info(gpuid[i]).compute_queue_count();
         jobs_proc[i] = std::min(jobs_proc[i], gpu_queue_count);
         total_jobs_proc += jobs_proc[i];
     }
 
-    for (int i=0; i<use_gpu_count; i++)
+    for (int i = 0; i < use_gpu_count; i++)
     {
         if (tilesize[i] != 0)
             continue;
@@ -810,9 +810,9 @@ int main(int argc, char** argv)
     }
 
     {
-        std::vector<RealESRGAN*> realesrgan(use_gpu_count);
+        std::vector<RealESRGAN *> realesrgan(use_gpu_count);
 
-        for (int i=0; i<use_gpu_count; i++)
+        for (int i = 0; i < use_gpu_count; i++)
         {
             realesrgan[i] = new RealESRGAN(gpuid[i], tta_mode);
 
@@ -832,23 +832,23 @@ int main(int argc, char** argv)
             ltp.input_files = input_files;
             ltp.output_files = output_files;
 
-            ncnn::Thread load_thread(load, (void*)&ltp);
+            ncnn::Thread load_thread(load, (void *)&ltp);
 
             // realesrgan proc
             std::vector<ProcThreadParams> ptp(use_gpu_count);
-            for (int i=0; i<use_gpu_count; i++)
+            for (int i = 0; i < use_gpu_count; i++)
             {
                 ptp[i].realesrgan = realesrgan[i];
             }
 
-            std::vector<ncnn::Thread*> proc_threads(total_jobs_proc);
+            std::vector<ncnn::Thread *> proc_threads(total_jobs_proc);
             {
                 int total_jobs_proc_id = 0;
-                for (int i=0; i<use_gpu_count; i++)
+                for (int i = 0; i < use_gpu_count; i++)
                 {
-                    for (int j=0; j<jobs_proc[i]; j++)
+                    for (int j = 0; j < jobs_proc[i]; j++)
                     {
-                        proc_threads[total_jobs_proc_id++] = new ncnn::Thread(proc, (void*)&ptp[i]);
+                        proc_threads[total_jobs_proc_id++] = new ncnn::Thread(proc, (void *)&ptp[i]);
                     }
                 }
             }
@@ -857,10 +857,10 @@ int main(int argc, char** argv)
             SaveThreadParams stp;
             stp.verbose = verbose;
 
-            std::vector<ncnn::Thread*> save_threads(jobs_save);
-            for (int i=0; i<jobs_save; i++)
+            std::vector<ncnn::Thread *> save_threads(jobs_save);
+            for (int i = 0; i < jobs_save; i++)
             {
-                save_threads[i] = new ncnn::Thread(save, (void*)&stp);
+                save_threads[i] = new ncnn::Thread(save, (void *)&stp);
             }
 
             // end
@@ -869,30 +869,30 @@ int main(int argc, char** argv)
             Task end;
             end.id = -233;
 
-            for (int i=0; i<total_jobs_proc; i++)
+            for (int i = 0; i < total_jobs_proc; i++)
             {
                 toproc.put(end);
             }
 
-            for (int i=0; i<total_jobs_proc; i++)
+            for (int i = 0; i < total_jobs_proc; i++)
             {
                 proc_threads[i]->join();
                 delete proc_threads[i];
             }
 
-            for (int i=0; i<jobs_save; i++)
+            for (int i = 0; i < jobs_save; i++)
             {
                 tosave.put(end);
             }
 
-            for (int i=0; i<jobs_save; i++)
+            for (int i = 0; i < jobs_save; i++)
             {
                 save_threads[i]->join();
                 delete save_threads[i];
             }
         }
 
-        for (int i=0; i<use_gpu_count; i++)
+        for (int i = 0; i < use_gpu_count; i++)
         {
             delete realesrgan[i];
         }
