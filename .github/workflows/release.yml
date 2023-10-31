@@ -73,7 +73,7 @@ jobs:
 
   macos:
     needs: [setup]
-    runs-on: macos-latest
+    runs-on: macos-11
     env:
       PACKAGENAME: ${{ needs.setup.outputs.APPNAME }}-${{ needs.setup.outputs.VERSION }}-macos
     steps:
