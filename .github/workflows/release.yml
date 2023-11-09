@@ -80,8 +80,6 @@ jobs:
       - uses: actions/checkout@v2
         with:
           submodules: "recursive"
-      - name: MacPorts
-        uses: keepitsimpletech/actions/setup-macports@setup-macports/releases/v1
       - name: Install OpenMP
         run: |
           curl -O https://mac.r-project.org/openmp/openmp-16.0.4-darwin20-Release.tar.gz
