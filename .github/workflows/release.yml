@@ -83,11 +83,11 @@ jobs:
       - name: Install OpenMP
         run: |
           curl -O https://mac.r-project.org/openmp/openmp-16.0.4-darwin20-Release.tar.gz
-          sudo tar fvxz openmp-16.0.4-darwin20-Release.tar.gz -C /
-          sudo cp usr/local/include/ompt.h $DEVELOPER_DIR/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include
-          sudo cp usr/local/include/omp.h $DEVELOPER_DIR/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include
-          sudo cp usr/local/include/omp-tools.h $DEVELOPER_DIR/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include
-          sudo cp usr/local/lib/libomp.dylib $DEVELOPER_DIR/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib
+          tar fvxz openmp-16.0.4-darwin20-Release.tar.gz -C /
+          sudo cp /usr/local/include/ompt.h $DEVELOPER_DIR/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include
+          sudo cp /usr/local/include/omp.h $DEVELOPER_DIR/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include
+          sudo cp /usr/local/include/omp-tools.h $DEVELOPER_DIR/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include
+          sudo cp /usr/local/lib/libomp.dylib $DEVELOPER_DIR/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib
       # - name: install-openmp
       #   run: |
       #     brew install llvm
