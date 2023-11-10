@@ -120,7 +120,6 @@ jobs:
           cmake --build . -j 3
       - name: install-openmp for arm64
         run: |
-          sudo port install libomp --arch=arm64
           brew fetch --force --bottle-tag=arm64_monterey libomp
           brew reinstall $(brew --cache --bottle-tag=arm64_monterey libomp)
           sudo cp /usr/local/Cellar/libomp/17.0.3/include/* $DEVELOPER_DIR/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include
