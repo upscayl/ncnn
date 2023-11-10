@@ -73,30 +73,24 @@ jobs:
 
   macos:
     needs: [setup]
-    runs-on: macos-11
+    runs-on: macos-12
     env:
       PACKAGENAME: ${{ needs.setup.outputs.APPNAME }}-${{ needs.setup.outputs.VERSION }}-macos
     steps:
       - uses: actions/checkout@v2
         with:
           submodules: "recursive"
-      - name: Install OpenMP
+      - name: install-openmp
         run: |
-          curl -O https://mac.r-project.org/openmp/openmp-16.0.4-darwin20-Release.tar.gz
-          tar fvxz openmp-16.0.4-darwin20-Release.tar.gz -C /
-          sudo cp /usr/local/include/ompt.h $DEVELOPER_DIR/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include
-          sudo cp /usr/local/include/omp.h $DEVELOPER_DIR/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include
-          sudo cp /usr/local/include/omp-tools.h $DEVELOPER_DIR/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include
-          sudo cp /usr/local/lib/libomp.dylib $DEVELOPER_DIR/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib
-      # - name: install-openmp
-      #   run: |
-      #     brew install llvm
-      #     brew install lit
-      #     brew reinstall libomp
-      #     brew info libomp
-      #     export PATH="/opt/homebrew/opt/llvm/bin:$PATH"
-      #     export LDFLAGS="-L/opt/homebrew/opt/libomp/lib"
-      #     export CPPFLAGS="-I/opt/homebrew/opt/libomp/include"
+          brew install llvm
+          brew install lit
+          brew reinstall libomp
+          brew info libomp
+          export PATH="/opt/homebrew/opt/llvm/bin:$PATH"
+          export LDFLAGS="-L/opt/homebrew/opt/libomp/lib"
+          export CPPFLAGS="-I/opt/homebrew/opt/libomp/include"
+          sudo cp /usr/local/Cellar/libomp/17.0.1/include/* $DEVELOPER_DIR/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include
+          sudo cp /usr/local/Cellar/libomp/17.0.1/lib/libomp.a $DEVELOPER_DIR/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib
       - name: cache-vulkansdk
         id: cache-vulkansdk
         uses: actions/cache@v1
@@ -126,11 +120,11 @@ jobs:
           cmake --build . -j 3
       - name: install-openmp for arm64
         run: |
-          # sudo port install libomp --arch=arm64
-          # brew fetch --force --bottle-tag=arm64_monterey libomp
-          # brew reinstall $(brew --cache --bottle-tag=arm64_monterey libomp)
-          # sudo cp /usr/local/Cellar/libomp/17.0.1/include/* $DEVELOPER_DIR/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include
-          # sudo cp /usr/local/Cellar/libomp/17.0.1/lib/libomp.a $DEVELOPER_DIR/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib
+          sudo port install libomp --arch=arm64
+          brew fetch --force --bottle-tag=arm64_monterey libomp
+          brew reinstall $(brew --cache --bottle-tag=arm64_monterey libomp)
+          sudo cp /usr/local/Cellar/libomp/17.0.1/include/* $DEVELOPER_DIR/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include
+          sudo cp /usr/local/Cellar/libomp/17.0.1/lib/libomp.a $DEVELOPER_DIR/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib
       - name: build-arm64
         run: |
           export VULKAN_SDK=`pwd`/vulkansdk-macos-1.3.261.1/macOS
