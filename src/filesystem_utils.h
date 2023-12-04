@@ -24,6 +24,13 @@ typedef std::string path_t;
 #define PATHSTR(X) X
 #endif
 
+bool is_image_file(const std::string& filename)
+{
+    const std::vector<std::string> extensions = {".jpg", ".jpeg", ".png", ".bmp", ".webp"};
+    std::string extension = filename.substr(filename.find_last_of("."));
+    return std::find(extensions.begin(), extensions.end(), extension) != extensions.end();
+}
+
 #if _WIN32
 static bool path_is_directory(const path_t& path)
 {
@@ -48,7 +55,10 @@ static int list_directory(const path_t& dirpath, std::vector<path_t>& imagepaths
         if (ent->d_type != DT_REG)
             continue;
 
-        imagepaths.push_back(path_t(ent->d_name));
+        std::string filename(ent->d_name);
+
+        if (is_image_file(filename))
+            imagepaths.push_back(path_t(filename));
     }
 
     _wclosedir(dir);
@@ -82,11 +92,17 @@ static int list_directory(const path_t& dirpath, std::vector<path_t>& imagepaths
         if (ent->d_type != DT_REG)
             continue;
 
-        imagepaths.push_back(path_t(ent->d_name));
+        std::string filename(ent->d_name);
+
+        if (is_image_file(filename))
+            imagepaths.push_back(path_t(filename));
     }
 
     closedir(dir);
     std::sort(imagepaths.begin(), imagepaths.end());
+
+    for (size_t i = 0; i < imagepaths.size(); i++)
+        fprintf(stderr, "images: %s", imagepaths[i].c_str());
 
     return 0;
 }
