@@ -55,10 +55,13 @@ static int list_directory(const path_t& dirpath, std::vector<path_t>& imagepaths
         if (ent->d_type != DT_REG)
             continue;
 
-        std::string filename(ent->d_name);
+        // Convert wide string to regular string
+        std::wstring wfilename(ent->d_name);
+        std::string filename(wfilename.begin(), wfilename.end());
 
+        // Check if the file is an image
         if (is_image_file(filename))
-            imagepaths.push_back(path_t(filename));
+            imagepaths.push_back(path_t(wfilename));
     }
 
     _wclosedir(dir);
