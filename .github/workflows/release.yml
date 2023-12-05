@@ -89,7 +89,6 @@ jobs:
           export PATH="/opt/homebrew/opt/llvm/bin:$PATH"
           export LDFLAGS="-L/opt/homebrew/opt/libomp/lib"
           export CPPFLAGS="-I/opt/homebrew/opt/libomp/include"
-          ls /usr/local
           sudo cp /usr/local/Cellar/libomp/17.0.1/include/* $DEVELOPER_DIR/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include
           sudo cp /usr/local/Cellar/libomp/17.0.1/lib/libomp.a $DEVELOPER_DIR/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib
       - name: cache-vulkansdk
