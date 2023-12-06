@@ -27,7 +27,18 @@ typedef std::string path_t;
 bool is_image_file(const std::string& filename)
 {
     const std::vector<std::string> extensions = {".jpg", ".jpeg", ".png", ".bmp", ".webp"};
-    std::string extension = filename.substr(filename.find_last_of("."));
+
+    // Check if the filename contains a dot
+    size_t last_dot = filename.find_last_of(".");
+    if (last_dot == std::string::npos)
+        return false; // No extension
+
+    // Check if it's a hidden file without an extension
+    if (filename[0] == '.' && last_dot == 0)
+        return false; // No extension
+
+    // Extract the extension and check if it's an image file extension
+    std::string extension = filename.substr(last_dot);
     return std::find(extensions.begin(), extensions.end(), extension) != extensions.end();
 }
 
@@ -58,6 +69,8 @@ static int list_directory(const path_t& dirpath, std::vector<path_t>& imagepaths
         // Convert wide string to regular string
         std::wstring wfilename(ent->d_name);
         std::string filename(wfilename.begin(), wfilename.end());
+
+        fprintf(stderr, "filename: %s\n", filename.c_str());
 
         // Check if the file is an image
         if (is_image_file(filename))
@@ -97,15 +110,16 @@ static int list_directory(const path_t& dirpath, std::vector<path_t>& imagepaths
 
         std::string filename(ent->d_name);
 
-        if (is_image_file(filename))
+        fprintf(stderr, "filename: %s\n", filename.c_str());
+
+        if (is_image_file(filename)) {
+            fprintf(stderr, "good filename: %s\n", filename.c_str());
             imagepaths.push_back(path_t(filename));
+        }
     }
 
     closedir(dir);
     std::sort(imagepaths.begin(), imagepaths.end());
-
-    for (size_t i = 0; i < imagepaths.size(); i++)
-        fprintf(stderr, "images: %s", imagepaths[i].c_str());
 
     return 0;
 }
