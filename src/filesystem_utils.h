@@ -73,8 +73,10 @@ static int list_directory(const path_t& dirpath, std::vector<path_t>& imagepaths
         fprintf(stderr, "filename: %s\n", filename.c_str());
 
         // Check if the file is an image
-        if (is_image_file(filename))
+        if (is_image_file(filename)) {
+            fprintf(stderr, "good filename: %s\n", filename.c_str());
             imagepaths.push_back(path_t(wfilename));
+        }
     }
 
     _wclosedir(dir);
