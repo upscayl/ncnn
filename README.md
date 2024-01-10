@@ -1,23 +1,26 @@
-# Steps:
+# Installation:
 
-1. Clone the main repository:
+### Prerequisites:
 
-   `git clone https://github.com/upscayl/upscayl-ncnn.git`
+- `cmake`
+- `gcc-9` and `g++-9`
+- `Vulkan SDK`
+  - Download a Vulkan SDK tarball from [https://vulkan.lunarg.com/sdk/home](https://vulkan.lunarg.com/sdk/home) and extract it using:\
+     `tar -xf vulkansdk-linux-x86_64-1.3.261.0.tar.xz`
+
+### Steps:
+
+1. Clone the repository with all submodules (requires an SSH key be added to your account):
+
+   `git clone --recursive git@github.com:upscayl/upscayl-ncnn.git`
 
    `cd upscayl-ncnn`
 
-2. Pull all the submodules (this step requires an SSH key be added to your account):
-   `git submodule update --init --recursive`
-3. Download a Vulkan SDK tarball from [https://vulkan.lunarg.com/sdk/home](https://vulkan.lunarg.com/sdk/home) and extract it using:\
-
-   `tar -xf vulkansdk-linux-x86_64-1.3.261.0.tar.xz`
-
-4. Install cmake, and gcc-9 and g++-9 from distro package manager
-5. Set up environment variables:`export CXX="g++-9" CC="gcc-9"`
-6. `export VULKAN_SDK=/path` where you extracted your vulkan SDK/1.3.261.0/x86_64
-7. Make a new build directory and cd into it. Follow the next steps: `mkdir build && cd build`
-8. Now, build: `cmake ../src`
-9. `cmake --build . -j 2` Replace the `-j 2` with the number of cores you wanna use to compile
+2. Set up environment variables: `export CC="gcc-9" CXX="g++-9" `
+3. `export VULKAN_SDK=/path` where you extracted your vulkan SDK/1.3.261.0/x86_64
+4. Make a new build directory and cd into it: `mkdir build && cd build`
+5. Now, build : `cmake ../src`
+6. `cmake --build . -j 2` Replace the `-j 2` with the number of cores you want to use to compile
 
 ## MacOS
 
@@ -25,7 +28,7 @@
 
 - openmp installed, install with `brew install libomp`
 - cmake installed, install with `brew install cmake`
-- Install vulkansdk from the website and it should be in /Users/youruser/VulkanSDK/`<version>` normally if you did not change anything
+- Install VulkanSDK from the website and it should be in /Users/youruser/VulkanSDK/`<version>` normally if you did not change anything
 
 ### Steps:
 
