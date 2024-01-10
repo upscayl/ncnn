@@ -9,7 +9,7 @@ on:
 
 env:
   DEVELOPER_DIR: /Applications/Xcode.app/Contents/Developer
-  APPLICATION_NAME: realesrgan-ncnn-vulkan
+  APPLICATION_NAME: upscayl-bin
 
 jobs:
   setup:
@@ -29,7 +29,7 @@ jobs:
     needs: [setup]
     runs-on: ubuntu-20.04
     env:
-      PACKAGENAME: ${{ needs.setup.outputs.APPNAME }}-${{ needs.setup.outputs.VERSION }}-ubuntu
+      PACKAGENAME: ${{ needs.setup.outputs.APPNAME }}-${{ needs.setup.outputs.VERSION }}-linux
     steps:
       - uses: actions/checkout@v2
         with:
