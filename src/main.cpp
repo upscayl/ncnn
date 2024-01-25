@@ -545,8 +545,8 @@ int main(int argc, char **argv)
         }
     }
 #endif // _WIN32
-    fprintf(stderr, "DEBUG: inputpath %s", inputpath.c_str());
-    fprintf(stderr, "DEBUG: outputpath %s", outputpath.c_str());
+    fprintf(stderr, "DEBUG: inputpath %s\n", inputpath.c_str());
+    fprintf(stderr, "DEBUG: outputpath %s\n", outputpath.c_str());
     if (inputpath.empty() || outputpath.empty())
     {
         print_usage();
