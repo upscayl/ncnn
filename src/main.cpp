@@ -324,6 +324,7 @@ void *proc(void *args)
 
         if (v.id == -233)
             break;
+        fprintf(stderr, "DEBUG: Length of outpath: %zu\n", v.outpath.length());
         fprintf(stderr, "DEBUG: outputpath %s\n", v.outpath.c_str());
         
         realesrgan->process(v.inimage, v.outimage);
