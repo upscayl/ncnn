@@ -391,7 +391,8 @@ void *save(void *args)
         else if (ext == PATHSTR("png") || ext == PATHSTR("PNG"))
         {
 #if _WIN32
-            fprintf(stderr, "DEBUG: The outputpath is %s", v.outpath.c_str()); 
+            fprintf(stderr, "DEBUG: Length of outpath: %zu\n", v.outpath.length());
+            fprintf(stderr, "DEBUG: The outputpath is %s\n", v.outpath.c_str());
             success = wic_encode_image(v.outpath.c_str(), v.outimage.w, v.outimage.h, v.outimage.elempack, v.outimage.data);
 #else
             success = stbi_write_png(v.outpath.c_str(), v.outimage.w, v.outimage.h, v.outimage.elempack, v.outimage.data, 0);
