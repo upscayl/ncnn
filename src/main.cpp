@@ -347,6 +347,7 @@ public:
 
 void *save(void *args)
 {
+    fprintf(stderr, "save 1");
     const SaveThreadParams *stp = (const SaveThreadParams *)args;
     const int verbose = stp->verbose;
 
@@ -382,6 +383,7 @@ void *save(void *args)
 
         /* ----------- Create folder if not exists -------------------*/
         fs::path fs_path = fs::absolute(v.outpath);
+        fprintf(stderr, "save 2 %s\n", fs_path);
         std::string parent_path = fs_path.parent_path().string();
         if (fs::exists(parent_path) != 1)
         {
