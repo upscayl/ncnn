@@ -324,7 +324,8 @@ void *proc(void *args)
 
         if (v.id == -233)
             break;
-
+        fprintf(stderr, "DEBUG: outputpath %s\n", v.outpath.c_str());
+        
         realesrgan->process(v.inimage, v.outimage);
 
         tosave.put(v);
@@ -545,8 +546,6 @@ int main(int argc, char **argv)
         }
     }
 #endif // _WIN32
-    fprintf(stderr, "DEBUG: inputpath %s\n", inputpath.c_str());
-    fprintf(stderr, "DEBUG: outputpath %s\n", outputpath.c_str());
     if (inputpath.empty() || outputpath.empty())
     {
         print_usage();
