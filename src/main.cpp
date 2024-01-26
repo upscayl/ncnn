@@ -383,13 +383,14 @@ void *save(void *args)
 
         /* ----------- Create folder if not exists -------------------*/
         fs::path fs_path = fs::absolute(v.outpath);
-        fprintf(stderr, "save 2 %s\n", fs_path.c_str());
         std::string parent_path = fs_path.parent_path().string();
         if (fs::exists(parent_path) != 1)
         {
             std::cout << "Create folder: [" << parent_path << "]." << std::endl;
             fs::create_directories(parent_path);
         }
+
+        fprintf(stderr, "save 2");
 
         if (ext == PATHSTR("webp") || ext == PATHSTR("WEBP"))
         {
@@ -398,6 +399,7 @@ void *save(void *args)
         else if (ext == PATHSTR("png") || ext == PATHSTR("PNG"))
         {
 #if _WIN32
+            fprintf(stderr, "saving PNG");
             fprintf(stderr, "DEBUG: Length of outpath: %zu\n", v.outpath.length());
             fprintf(stderr, "DEBUG: The outputpath is %s\n", v.outpath.c_str());
             success = wic_encode_image(v.outpath.c_str(), v.outimage.w, v.outimage.h, v.outimage.elempack, v.outimage.data);
@@ -414,6 +416,7 @@ void *save(void *args)
             success = stbi_write_jpg(v.outpath.c_str(), v.outimage.w, v.outimage.h, v.outimage.elempack, v.outimage.data, 100);
 #endif
         }
+        fprintf(stderr, "success is %d", success);
         if (success)
         {
             fprintf(stderr, "Upscayl Successful\n");
