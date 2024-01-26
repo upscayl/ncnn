@@ -383,10 +383,7 @@ void *save(void *args)
 
         /* ----------- Create folder if not exists -------------------*/
         fs::path fs_path = fs::absolute(v.outpath);
-        fprintf(stderr, "save 2 ");
-        for (size_t i = 0; i < fs_path.length(); ++i) {
-            fprintf(stderr, "%c", fs_path[i]);
-        }
+        fprintf(stderr, "save 2 %s\n", fs_path.c_str());
         std::string parent_path = fs_path.parent_path().string();
         if (fs::exists(parent_path) != 1)
         {
