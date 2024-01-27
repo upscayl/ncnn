@@ -324,12 +324,6 @@ void *proc(void *args)
 
         if (v.id == -233)
             break;
-        fprintf(stderr, "DEBUG: Length of outpath: %zu\n", v.outpath.length());
-        fprintf(stderr, "DEBUG: The outputpath is ");
-        for (size_t i = 0; i < v.outpath.length(); ++i) {
-            fprintf(stderr, "%c", v.outpath[i]);
-        }
-        fprintf(stderr, "\n");
         
         realesrgan->process(v.inimage, v.outimage);
 
@@ -347,7 +341,6 @@ public:
 
 void *save(void *args)
 {
-    fprintf(stderr, "save 1");
     const SaveThreadParams *stp = (const SaveThreadParams *)args;
     const int verbose = stp->verbose;
 
@@ -385,14 +378,11 @@ void *save(void *args)
         fs::path fs_path = fs::absolute(v.outpath);
         std::wstring parent_path = fs_path.parent_path().wstring();
 
-        fprintf(stderr, "parent_path: %ls\n", parent_path.c_str());
         if (!fs::exists(parent_path))
         {
             std::wcout << "Create folder: [" << parent_path << "]." << std::endl;
             fs::create_directories(parent_path);
         }
-
-        fprintf(stderr, "save 2");
 
         if (ext == PATHSTR("webp") || ext == PATHSTR("WEBP"))
         {
@@ -401,9 +391,6 @@ void *save(void *args)
         else if (ext == PATHSTR("png") || ext == PATHSTR("PNG"))
         {
 #if _WIN32
-            fprintf(stderr, "saving PNG");
-            fprintf(stderr, "DEBUG: Length of outpath: %zu\n", v.outpath.length());
-            fprintf(stderr, "DEBUG: The outputpath is %s\n", v.outpath.c_str());
             success = wic_encode_image(v.outpath.c_str(), v.outimage.w, v.outimage.h, v.outimage.elempack, v.outimage.data);
 #else
             success = stbi_write_png(v.outpath.c_str(), v.outimage.w, v.outimage.h, v.outimage.elempack, v.outimage.data, 0);
@@ -412,13 +399,11 @@ void *save(void *args)
         else if (ext == PATHSTR("jpg") || ext == PATHSTR("JPG") || ext == PATHSTR("jpeg") || ext == PATHSTR("JPEG"))
         {
 #if _WIN32
-            fprintf(stderr, "DEBUG: The outputpath is %s", v.outpath.c_str());
             success = wic_encode_jpeg_image(v.outpath.c_str(), v.outimage.w, v.outimage.h, v.outimage.elempack, v.outimage.data);
 #else
             success = stbi_write_jpg(v.outpath.c_str(), v.outimage.w, v.outimage.h, v.outimage.elempack, v.outimage.data, 100);
 #endif
         }
-        fprintf(stderr, "success is %d", success);
         if (success)
         {
             fprintf(stderr, "Upscayl Successful\n");
