@@ -385,7 +385,7 @@ void *save(void *args)
         fs::path fs_path = fs::absolute(v.outpath);
         std::wstring parent_path = fs_path.parent_path().wstring();
 
-        fprintf(stderr, "parent_path: %ls\n", parent_path);
+        fprintf(stderr, "parent_path: %ls\n", parent_path.c_string());
         if (!fs::exists(parent_path))
         {
             std::wcout << "Create folder: [" << parent_path << "]." << std::endl;
