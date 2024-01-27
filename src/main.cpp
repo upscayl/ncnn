@@ -382,9 +382,11 @@ void *save(void *args)
         path_t ext = get_file_extension(v.outpath);
 
         /* ----------- Create folder if not exists -------------------*/
-        fs::path fs_path = fs::absolute(v.outpath);
-        std::string parent_path = fs_path.parent_path().string();
-        if (fs::exists(parent_path) != 1)
+        fs::path fs_path = fs::u8path(fs::absolute(v.outpath));
+        std::wstring parent_path = fs_path.parent_path().wstring();
+
+        fprintf(stderr, "parent_path: %s\n", parent_path);
+        if (!fs::exists(parent_path))
         {
             std::cout << "Create folder: [" << parent_path << "]." << std::endl;
             fs::create_directories(parent_path);
