@@ -1,15 +1,11 @@
 name: release
 on:
   workflow_dispatch:
-    inputs:
-      version:
-        type: string
-        required: true
-        description: "Application version"
 
 env:
   DEVELOPER_DIR: /Applications/Xcode.app/Contents/Developer
   APPLICATION_NAME: upscayl-bin
+  VK_VERSION: $VK_VERSION
 
 jobs:
   setup:
@@ -23,7 +19,7 @@ jobs:
         run: echo ::set-output name=APPNAME::${APPLICATION_NAME}
       - name: get-version
         id: get_version
-        run: echo ::set-output name=VERSION::${{ github.event.inputs.version }}
+        run: echo "{version}=$(date +'%Y.%m.%d_%H%M%S')" >> "$GITHUB_ENV"
 
   ubuntu:
     needs: [setup]
@@ -38,22 +34,22 @@ jobs:
         id: cache-vulkansdk
         uses: actions/cache@v1
         with:
-          path: "1.3.261.1"
-          key: vulkansdk-linux-x86_64-1.3.261.1
+          path: "{{ VK_VERSION }}"
+          key: "vulkansdk-linux-x86_64-{{VK_VERSION}}"
       - name: vulkansdk
         if: steps.cache-vulkansdk.outputs.cache-hit != 'true'
         run: |
-          wget https://sdk.lunarg.com/sdk/download/1.3.261.1/linux/vulkansdk-linux-x86_64-1.3.261.1.tar.xz?Human=true -O vulkansdk-linux-x86_64-1.3.261.1.tar.xz
-          tar -xf vulkansdk-linux-x86_64-1.3.261.1.tar.xz
-          rm -rf 1.3.261.1/source 1.3.261.1/samples
-          find 1.3.261.1 -type f | grep -v -E 'vulkan|glslang' | xargs rm
+          wget https://sdk.lunarg.com/sdk/download/$VK_VERSION/linux/vulkansdk-linux-x86_64-$VK_VERSION.tar.xz?Human=true -O vulkansdk-linux-x86_64-$VK_VERSION.tar.xz
+          tar -xf vulkansdk-linux-x86_64-$VK_VERSION.tar.xz
+          rm -rf $VK_VERSION/source $VK_VERSION/samples
+          find $VK_VERSION -type f | grep -v -E 'vulkan|glslang' | xargs rm
       - name: build
         run: |
           sudo add-apt-repository ppa:ubuntu-toolchain-r/test
           sudo apt update
           sudo apt install gcc-9 g++-9
           export CXX="g++-9" CC="gcc-9"
-          export VULKAN_SDK=`pwd`/1.3.261.1/x86_64
+          export VULKAN_SDK=`pwd`/$VK_VERSION/x86_64
           mkdir build && cd build
           cmake ../src
           cmake --build . -j 2
@@ -95,27 +91,27 @@ jobs:
         id: cache-vulkansdk
         uses: actions/cache@v1
         with:
-          path: "vulkansdk-macos-1.3.261.1"
-          key: vulkansdk-macos-1.3.261.1
+          path: "vulkansdk-macos-{{VK_VERSION}}"
+          key: vulkansdk-macos-{{VK_VERSION}}
       - name: vulkansdk
         if: steps.cache-vulkansdk.outputs.cache-hit != 'true'
         run: |
-          wget https://sdk.lunarg.com/sdk/download/1.3.261.1/mac/vulkansdk-macos-1.3.261.1.dmg?Human=true -O vulkansdk-macos-1.3.261.1.dmg
-          hdiutil attach vulkansdk-macos-1.3.261.1.dmg
-          sudo /Volumes/vulkansdk-macos-1.3.261.1/InstallVulkan.app/Contents/MacOS/InstallVulkan --root `pwd`/vulkansdk-macos-1.3.261.1 --accept-licenses --default-answer --confirm-command install
-          sudo rm -rf vulkansdk-macos-1.3.261.1/Applications
-          find vulkansdk-macos-1.3.261.1 -type f | grep -v -E 'vulkan|glslang|MoltenVK' | xargs rm
-          hdiutil detach /Volumes/vulkansdk-macos-1.3.261.1
+          wget https://sdk.lunarg.com/sdk/download/$VK_VERSION/mac/vulkansdk-macos-$VK_VERSION.dmg?Human=true -O vulkansdk-macos-$VK_VERSION.dmg
+          hdiutil attach vulkansdk-macos-$VK_VERSION.dmg
+          sudo /Volumes/vulkansdk-macos-$VK_VERSION/InstallVulkan.app/Contents/MacOS/InstallVulkan --root `pwd`/vulkansdk-macos-$VK_VERSION --accept-licenses --default-answer --confirm-command install
+          sudo rm -rf vulkansdk-macos-$VK_VERSION/Applications
+          find vulkansdk-macos-$VK_VERSION -type f | grep -v -E 'vulkan|glslang|MoltenVK' | xargs rm
+          hdiutil detach /Volumes/vulkansdk-macos-$VK_VERSION
       - name: build-x86_64
         run: |
-          export VULKAN_SDK=`pwd`/vulkansdk-macos-1.3.261.1/macOS
+          export VULKAN_SDK=`pwd`/vulkansdk-macos-$VK_VERSION/macOS
           mkdir build-x86_64 && cd build-x86_64
           cmake -D USE_STATIC_MOLTENVK=ON -D CMAKE_OSX_ARCHITECTURES="x86_64" \
               -D OpenMP_C_FLAGS="-Xclang -fopenmp" -D OpenMP_CXX_FLAGS="-Xclang -fopenmp" \
               -D OpenMP_C_LIB_NAMES="libomp" -D OpenMP_CXX_LIB_NAMES="libomp" \
               -D OpenMP_libomp_LIBRARY="$DEVELOPER_DIR/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib/libomp.a" \
-              -D Vulkan_INCLUDE_DIR=`pwd`/../vulkansdk-macos-1.3.261.1/MoltenVK/include \
-              -D Vulkan_LIBRARY=`pwd`/../vulkansdk-macos-1.3.261.1/MoltenVK/MoltenVK.xcframework/macos-arm64_x86_64/libMoltenVK.a \
+              -D Vulkan_INCLUDE_DIR=`pwd`/../vulkansdk-macos-$VK_VERSION/MoltenVK/include \
+              -D Vulkan_LIBRARY=`pwd`/../vulkansdk-macos-$VK_VERSION/MoltenVK/MoltenVK.xcframework/macos-arm64_x86_64/libMoltenVK.a \
               ../src
           cmake --build . -j 3
       - name: install-openmp for arm64
@@ -126,15 +122,15 @@ jobs:
           sudo cp /usr/local/Cellar/libomp/$(brew list --versions libomp | grep -oE '[0-9]+\.[0-9]+\.[0-9]')/lib/libomp.a $DEVELOPER_DIR/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib
       - name: build-arm64
         run: |
-          export VULKAN_SDK=`pwd`/vulkansdk-macos-1.3.261.1/macOS
+          export VULKAN_SDK=`pwd`/vulkansdk-macos-$VK_VERSION/macOS
           mkdir build-arm64 && cd build-arm64
           cmake -D USE_STATIC_MOLTENVK=ON -D CMAKE_OSX_ARCHITECTURES="arm64" \
               -D CMAKE_CROSSCOMPILING=ON -D CMAKE_SYSTEM_PROCESSOR=arm64 \
               -D OpenMP_C_FLAGS="-Xclang -fopenmp" -D OpenMP_CXX_FLAGS="-Xclang -fopenmp" \
               -D OpenMP_C_LIB_NAMES="libomp" -D OpenMP_CXX_LIB_NAMES="libomp" \
               -D OpenMP_libomp_LIBRARY="$DEVELOPER_DIR/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib/libomp.a" \
-              -D Vulkan_INCLUDE_DIR=`pwd`/../vulkansdk-macos-1.3.261.1/MoltenVK/include \
-              -D Vulkan_LIBRARY=`pwd`/../vulkansdk-macos-1.3.261.1/MoltenVK/MoltenVK.xcframework/macos-arm64_x86_64/libMoltenVK.a \
+              -D Vulkan_INCLUDE_DIR=`pwd`/../vulkansdk-macos-$VK_VERSION/MoltenVK/include \
+              -D Vulkan_LIBRARY=`pwd`/../vulkansdk-macos-$VK_VERSION/MoltenVK/MoltenVK.xcframework/macos-arm64_x86_64/libMoltenVK.a \
               ../src
           cmake --build . -j 3
       - name: package
@@ -165,12 +161,12 @@ jobs:
         uses: actions/cache@v1
         with:
           path: "VulkanSDK"
-          key: VulkanSDK-1.3.261.1-Installer
+          key: VulkanSDK-{{ VK_VERSION }}-Installer
       - name: vulkansdk
         if: steps.cache-vulkansdk.outputs.cache-hit != 'true'
         run: |
-          Invoke-WebRequest -Uri https://sdk.lunarg.com/sdk/download/1.3.261.1/windows/VulkanSDK-1.3.261.1-Installer.exe?Human=true -OutFile VulkanSDK-1.3.261.1-Installer.exe
-          7z x -aoa ./VulkanSDK-1.3.261.1-Installer.exe -oVulkanSDK
+          Invoke-WebRequest -Uri "https://sdk.lunarg.com/sdk/download/$env:VK_VERSION/windows/VulkanSDK-$env:VK_VERSION-Installer.exe?Human=true" -OutFile VulkanSDK-$env:VK_VERSION-Installer.exe
+          7z x -aoa ./VulkanSDK-$env:VK_VERSION-Installer.exe -oVulkanSDK
       - name: build
         run: |
           $env:VULKAN_SDK="$(pwd)/VulkanSDK"
