@@ -130,7 +130,7 @@ jobs:
               -D OpenMP_C_LIB_NAMES="libomp" -D OpenMP_CXX_LIB_NAMES="libomp" \
               -D OpenMP_libomp_LIBRARY="$DEVELOPER_DIR/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib/libomp.a" \
               -D Vulkan_INCLUDE_DIR=`pwd`/../vulkansdk-macos-$VK_VERSION/macOS/MoltenVK/include \
-              -D Vulkan_LIBRARY=`pwd`/../vulkansdk-macos-$VK_VERSION/macOS/MoltenVK.xcframework/macos-arm64_x86_64/libMoltenVK.a \
+              -D Vulkan_LIBRARY=`pwd`/../vulkansdk-macos-$VK_VERSION/macOS/lib/MoltenVK.xcframework/macos-arm64_x86_64/libMoltenVK.a \
               ../src
           cmake --build . -j 3
       - name: package
