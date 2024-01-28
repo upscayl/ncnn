@@ -107,8 +107,11 @@ jobs:
       - name: build-x86_64
         run: |
           export VULKAN_SDK=`pwd`/vulkansdk-macos-$VK_VERSION/macOS/include
-          python3 `pwd`/vulkansdk-macos-$VK_VERSION/install_vulkan.py
-          . `pwd`/vulkansdk-macos-$VK_VERSION/setup-env.sh
+          export DEFAULT_DIR=`pwd`
+          cd `pwd`/vulkansdk-macos-$VK_VERSION/
+          ./install_vulkan.py
+          ./setup-env.sh
+          cd $DEFAULT_DIR
           mkdir build-x86_64 && cd build-x86_64
           cmake -D USE_STATIC_MOLTENVK=ON -D CMAKE_OSX_ARCHITECTURES="x86_64" \
               -D OpenMP_C_FLAGS="-Xclang -fopenmp" -D OpenMP_CXX_FLAGS="-Xclang -fopenmp" \
@@ -126,9 +129,12 @@ jobs:
           sudo cp /usr/local/Cellar/libomp/$(brew list --versions libomp | grep -oE '[0-9]+\.[0-9]+\.[0-9]')/lib/libomp.a $DEVELOPER_DIR/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib
       - name: build-arm64
         run: |
-          export VULKAN_SDK=`pwd`/vulkansdk-macos-$VK_VERSION/macOS
-          python3 `pwd`/vulkansdk-macos-$VK_VERSION/install_vulkan.py
-          . `pwd`/vulkansdk-macos-$VK_VERSION/setup-env.sh
+          export VULKAN_SDK=`pwd`/vulkansdk-macos-$VK_VERSION/macOS/include
+          export DEFAULT_DIR=`pwd`
+          cd `pwd`/vulkansdk-macos-$VK_VERSION/
+          ./install_vulkan.py
+          ./setup-env.sh
+          cd $DEFAULT_DIR
           mkdir build-arm64 && cd build-arm64
           cmake -D USE_STATIC_MOLTENVK=ON -D CMAKE_OSX_ARCHITECTURES="arm64" \
               -D CMAKE_CROSSCOMPILING=ON -D CMAKE_SYSTEM_PROCESSOR=arm64 \
