@@ -17,7 +17,7 @@ jobs:
       uses: actions/cache@v1
       with:
         path: "VulkanSDK"
-        key: VulkanSDK-${{ VK_VERSION }}-Installer
+        key: "VulkanSDK-{{ VK_VERSION }}-Installer"
     - name: vulkansdk
       if: steps.cache-vulkansdk.outputs.cache-hit != 'true'
       run: |
