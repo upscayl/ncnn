@@ -106,7 +106,6 @@ jobs:
       - name: build-x86_64
         run: |
           export VULKAN_SDK=`pwd`/vulkansdk-macos-$VK_VERSION/macOS/include/vulkan
-          cd $DEFAULT_DIR
           mkdir build-x86_64 && cd build-x86_64
           cmake -D USE_STATIC_MOLTENVK=ON -D CMAKE_OSX_ARCHITECTURES="x86_64" \
               -D OpenMP_C_FLAGS="-Xclang -fopenmp" -D OpenMP_CXX_FLAGS="-Xclang -fopenmp" \
