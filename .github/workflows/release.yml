@@ -101,7 +101,6 @@ jobs:
           wget https://sdk.lunarg.com/sdk/download/$VK_VERSION/mac/vulkansdk-macos-$VK_VERSION.dmg?Human=true -O vulkansdk-macos-$VK_VERSION.dmg
           hdiutil attach vulkansdk-macos-$VK_VERSION.dmg
           sudo /Volumes/vulkansdk-macos-$VK_VERSION/InstallVulkan.app/Contents/MacOS/InstallVulkan --root `pwd`/vulkansdk-macos-$VK_VERSION --accept-licenses --default-answer --confirm-command install
-          sudo rm -rf vulkansdk-macos-$VK_VERSION/Applications
           find vulkansdk-macos-$VK_VERSION -type f | grep -v -E 'vulkan|glslang|MoltenVK' | xargs rm
           hdiutil detach /Volumes/vulkansdk-macos-$VK_VERSION
       - name: build-x86_64
