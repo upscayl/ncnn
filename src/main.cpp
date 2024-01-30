@@ -102,7 +102,7 @@ static std::vector<int> parse_optarg_int_array(const char *optarg)
 
 static void print_usage()
 {
-    fprintf(stderr, "Usage: realesrgan-ncnn-vulkan -i infile -o outfile [options]...\n\n");
+    fprintf(stderr, "Usage: upscayl-bin -i infile -o outfile [options]...\n\n");
     fprintf(stderr, "  -h                   show this help\n");
     fprintf(stderr, "  -i input-path        input image path (jpg/png/webp) or directory\n");
     fprintf(stderr, "  -o output-path       output image path (jpg/png/webp) or directory\n");
@@ -324,7 +324,7 @@ void *proc(void *args)
 
         if (v.id == -233)
             break;
-        
+
         realesrgan->process(v.inimage, v.outimage);
 
         tosave.put(v);

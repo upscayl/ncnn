@@ -39,3 +39,7 @@ release
 
 build*/
 VulkanSDK/
+vulkan-sdk/
+*.dmg
+ncnn/
+libwebp/
