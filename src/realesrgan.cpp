@@ -6,46 +6,53 @@
 #include <vector>
 
 static const uint32_t realesrgan_preproc_spv_data[] = {
-    #include "realesrgan_preproc.spv.hex.h"
+#include "realesrgan_preproc.spv.hex.h"
 };
 static const uint32_t realesrgan_preproc_fp16s_spv_data[] = {
-    #include "realesrgan_preproc_fp16s.spv.hex.h"
+#include "realesrgan_preproc_fp16s.spv.hex.h"
 };
 static const uint32_t realesrgan_preproc_int8s_spv_data[] = {
-    #include "realesrgan_preproc_int8s.spv.hex.h"
+#include "realesrgan_preproc_int8s.spv.hex.h"
 };
 static const uint32_t realesrgan_postproc_spv_data[] = {
-    #include "realesrgan_postproc.spv.hex.h"
+#include "realesrgan_postproc.spv.hex.h"
 };
 static const uint32_t realesrgan_postproc_fp16s_spv_data[] = {
-    #include "realesrgan_postproc_fp16s.spv.hex.h"
+#include "realesrgan_postproc_fp16s.spv.hex.h"
 };
 static const uint32_t realesrgan_postproc_int8s_spv_data[] = {
-    #include "realesrgan_postproc_int8s.spv.hex.h"
+#include "realesrgan_postproc_int8s.spv.hex.h"
 };
 
 static const uint32_t realesrgan_preproc_tta_spv_data[] = {
-    #include "realesrgan_preproc_tta.spv.hex.h"
+#include "realesrgan_preproc_tta.spv.hex.h"
 };
 static const uint32_t realesrgan_preproc_tta_fp16s_spv_data[] = {
-    #include "realesrgan_preproc_tta_fp16s.spv.hex.h"
+#include "realesrgan_preproc_tta_fp16s.spv.hex.h"
 };
 static const uint32_t realesrgan_preproc_tta_int8s_spv_data[] = {
-    #include "realesrgan_preproc_tta_int8s.spv.hex.h"
+#include "realesrgan_preproc_tta_int8s.spv.hex.h"
 };
 static const uint32_t realesrgan_postproc_tta_spv_data[] = {
-    #include "realesrgan_postproc_tta.spv.hex.h"
+#include "realesrgan_postproc_tta.spv.hex.h"
 };
 static const uint32_t realesrgan_postproc_tta_fp16s_spv_data[] = {
-    #include "realesrgan_postproc_tta_fp16s.spv.hex.h"
+#include "realesrgan_postproc_tta_fp16s.spv.hex.h"
 };
 static const uint32_t realesrgan_postproc_tta_int8s_spv_data[] = {
-    #include "realesrgan_postproc_tta_int8s.spv.hex.h"
+#include "realesrgan_postproc_tta_int8s.spv.hex.h"
 };
 
-RealESRGAN::RealESRGAN(int gpuid, bool _tta_mode)
+RealESRGAN::RealESRGAN(int gpuid, bool _tta_mode, bool cpu_only)
 {
-    net.opt.use_vulkan_compute = true;
+    if (cpu_only)
+    {
+        net.opt.use_vulkan_compute = false;
+    }
+    else
+    {
+        net.opt.use_vulkan_compute = true;
+    }
     net.opt.use_fp16_packed = true;
     net.opt.use_fp16_storage = true;
     net.opt.use_fp16_arithmetic = false;
@@ -81,14 +88,14 @@ RealESRGAN::~RealESRGAN()
 }
 
 #if _WIN32
-int RealESRGAN::load(const std::wstring& parampath, const std::wstring& modelpath)
+int RealESRGAN::load(const std::wstring &parampath, const std::wstring &modelpath)
 #else
-int RealESRGAN::load(const std::string& parampath, const std::string& modelpath)
+int RealESRGAN::load(const std::string &parampath, const std::string &modelpath)
 #endif
 {
 #if _WIN32
     {
-        FILE* fp = _wfopen(parampath.c_str(), L"rb");
+        FILE *fp = _wfopen(parampath.c_str(), L"rb");
         if (!fp)
         {
             fwprintf(stderr, L"_wfopen %ls failed\n", parampath.c_str());
@@ -99,7 +106,7 @@ int RealESRGAN::load(const std::string& parampath, const std::string& modelpath)
         fclose(fp);
     }
     {
-        FILE* fp = _wfopen(modelpath.c_str(), L"rb");
+        FILE *fp = _wfopen(modelpath.c_str(), L"rb");
         if (!fp)
         {
             fwprintf(stderr, L"_wfopen %ls failed\n", modelpath.c_str());
@@ -169,7 +176,7 @@ int RealESRGAN::load(const std::string& parampath, const std::string& modelpath)
         bicubic_2x->vkdev = net.vulkan_device();
 
         ncnn::ParamDict pd;
-        pd.set(0, 3);// bicubic
+        pd.set(0, 3); // bicubic
         pd.set(1, 2.f);
         pd.set(2, 2.f);
         bicubic_2x->load_param(pd);
@@ -181,7 +188,7 @@ int RealESRGAN::load(const std::string& parampath, const std::string& modelpath)
         bicubic_3x->vkdev = net.vulkan_device();
 
         ncnn::ParamDict pd;
-        pd.set(0, 3);// bicubic
+        pd.set(0, 3); // bicubic
         pd.set(1, 3.f);
         pd.set(2, 3.f);
         bicubic_3x->load_param(pd);
@@ -193,7 +200,7 @@ int RealESRGAN::load(const std::string& parampath, const std::string& modelpath)
         bicubic_4x->vkdev = net.vulkan_device();
 
         ncnn::ParamDict pd;
-        pd.set(0, 3);// bicubic
+        pd.set(0, 3); // bicubic
         pd.set(1, 4.f);
         pd.set(2, 4.f);
         bicubic_4x->load_param(pd);
@@ -204,9 +211,9 @@ int RealESRGAN::load(const std::string& parampath, const std::string& modelpath)
     return 0;
 }
 
-int RealESRGAN::process(const ncnn::Mat& inimage, ncnn::Mat& outimage) const
+int RealESRGAN::process(const ncnn::Mat &inimage, ncnn::Mat &outimage) const
 {
-    const unsigned char* pixeldata = (const unsigned char*)inimage.data;
+    const unsigned char *pixeldata = (const unsigned char *)inimage.data;
     const int w = inimage.w;
     const int h = inimage.h;
     const int channels = inimage.elempack;
@@ -214,8 +221,8 @@ int RealESRGAN::process(const ncnn::Mat& inimage, ncnn::Mat& outimage) const
     const int TILE_SIZE_X = tilesize;
     const int TILE_SIZE_Y = tilesize;
 
-    ncnn::VkAllocator* blob_vkallocator = net.vulkan_device()->acquire_blob_allocator();
-    ncnn::VkAllocator* staging_vkallocator = net.vulkan_device()->acquire_staging_allocator();
+    ncnn::VkAllocator *blob_vkallocator = net.vulkan_device()->acquire_blob_allocator();
+    ncnn::VkAllocator *staging_vkallocator = net.vulkan_device()->acquire_staging_allocator();
 
     ncnn::Option opt = net.opt;
     opt.blob_vkallocator = blob_vkallocator;
@@ -228,7 +235,7 @@ int RealESRGAN::process(const ncnn::Mat& inimage, ncnn::Mat& outimage) const
 
     const size_t in_out_tile_elemsize = opt.use_fp16_storage ? 2u : 4u;
 
-    //#pragma omp parallel for num_threads(2)
+    // #pragma omp parallel for num_threads(2)
     for (int yi = 0; yi < ytiles; yi++)
     {
         const int tile_h_nopad = std::min((yi + 1) * TILE_SIZE_Y, h) - yi * TILE_SIZE_Y;
@@ -239,7 +246,7 @@ int RealESRGAN::process(const ncnn::Mat& inimage, ncnn::Mat& outimage) const
         ncnn::Mat in;
         if (opt.use_fp16_storage && opt.use_int8_storage)
         {
-            in = ncnn::Mat(w, (in_tile_y1 - in_tile_y0), (unsigned char*)pixeldata + in_tile_y0 * w * channels, (size_t)channels, 1);
+            in = ncnn::Mat(w, (in_tile_y1 - in_tile_y0), (unsigned char *)pixeldata + in_tile_y0 * w * channels, (size_t)channels, 1);
         }
         else
         {
@@ -559,7 +566,7 @@ int RealESRGAN::process(const ncnn::Mat& inimage, ncnn::Mat& outimage) const
 
             if (opt.use_fp16_storage && opt.use_int8_storage)
             {
-                out = ncnn::Mat(out_gpu.w, out_gpu.h, (unsigned char*)outimage.data + yi * scale * TILE_SIZE_Y * w * scale * channels, (size_t)channels, 1);
+                out = ncnn::Mat(out_gpu.w, out_gpu.h, (unsigned char *)outimage.data + yi * scale * TILE_SIZE_Y * w * scale * channels, (size_t)channels, 1);
             }
 
             cmd.record_clone(out_gpu, out, opt);
@@ -571,17 +578,17 @@ int RealESRGAN::process(const ncnn::Mat& inimage, ncnn::Mat& outimage) const
                 if (channels == 3)
                 {
 #if _WIN32
-                    out.to_pixels((unsigned char*)outimage.data + yi * scale * TILE_SIZE_Y * w * scale * channels, ncnn::Mat::PIXEL_RGB2BGR);
+                    out.to_pixels((unsigned char *)outimage.data + yi * scale * TILE_SIZE_Y * w * scale * channels, ncnn::Mat::PIXEL_RGB2BGR);
 #else
-                    out.to_pixels((unsigned char*)outimage.data + yi * scale * TILE_SIZE_Y * w * scale * channels, ncnn::Mat::PIXEL_RGB);
+                    out.to_pixels((unsigned char *)outimage.data + yi * scale * TILE_SIZE_Y * w * scale * channels, ncnn::Mat::PIXEL_RGB);
 #endif
                 }
                 if (channels == 4)
                 {
 #if _WIN32
-                    out.to_pixels((unsigned char*)outimage.data + yi * scale * TILE_SIZE_Y * w * scale * channels, ncnn::Mat::PIXEL_RGBA2BGRA);
+                    out.to_pixels((unsigned char *)outimage.data + yi * scale * TILE_SIZE_Y * w * scale * channels, ncnn::Mat::PIXEL_RGBA2BGRA);
 #else
-                    out.to_pixels((unsigned char*)outimage.data + yi * scale * TILE_SIZE_Y * w * scale * channels, ncnn::Mat::PIXEL_RGBA);
+                    out.to_pixels((unsigned char *)outimage.data + yi * scale * TILE_SIZE_Y * w * scale * channels, ncnn::Mat::PIXEL_RGBA);
 #endif
                 }
             }

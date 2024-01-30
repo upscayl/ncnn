@@ -1,3 +1,37 @@
 {
-  "cmake.sourceDirectory": "/Users/macbook-air/Public/upscayl-ncnn/src"
+  "cmake.sourceDirectory": "/Users/macbook-air/Public/upscayl-ncnn/src",
+  "files.associations": {
+    "*.jsx": "javascriptreact",
+    ".env.local": "dotenv",
+    "*.html": "html",
+    "*.css": "tailwindcss",
+    "*.md": "markdown",
+    "__bits": "cpp",
+    "__config": "cpp",
+    "__debug": "cpp",
+    "__tuple": "cpp",
+    "__verbose_abort": "cpp",
+    "atomic": "cpp",
+    "bit": "cpp",
+    "charconv": "cpp",
+    "cmath": "cpp",
+    "complex": "cpp",
+    "cstddef": "cpp",
+    "cstdint": "cpp",
+    "cstdlib": "cpp",
+    "cstring": "cpp",
+    "cwchar": "cpp",
+    "exception": "cpp",
+    "initializer_list": "cpp",
+    "iosfwd": "cpp",
+    "limits": "cpp",
+    "memory": "cpp",
+    "new": "cpp",
+    "stdexcept": "cpp",
+    "tuple": "cpp",
+    "type_traits": "cpp",
+    "typeinfo": "cpp",
+    "algorithm": "cpp",
+    "vector": "cpp"
+  }
 }

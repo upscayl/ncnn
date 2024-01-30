@@ -20,7 +20,7 @@ if [ $PLATFORM == "arm64" ]; then
 		 -D Vulkan_INCLUDE_DIR="../vulkan-sdk/macOS/include" \
 		 -D Vulkan_LIBRARY=../vulkan-sdk/macOS/lib/MoltenVK.xcframework/macos-arm64_x86_64/libMoltenVK.a \
 		../src ;
-		cmake --build . -j 8;
+		cmake --build .;
 else
 		# Run upscayl-bin
 		echo "Building for other platforms needs to be added to build.sh"
