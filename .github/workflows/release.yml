@@ -37,8 +37,8 @@ jobs:
         id: cache-vulkansdk
         uses: actions/cache@v1
         with:
-          path: vulkansdk-linux-x86_64-${{ VK_VERSION }}
-          key: vulkansdk-linux-x86_64-${{VK_VERSION}}
+          path: vulkansdk-linux-x86_64-${{ env.VK_VERSION }}
+          key: vulkansdk-linux-x86_64-${{ env.VK_VERSION }}
       - name: vulkansdk
         if: steps.cache-vulkansdk.outputs.cache-hit != 'true'
         run: |
@@ -161,7 +161,7 @@ jobs:
         uses: actions/cache@v1
         with:
           path: "VulkanSDK"
-          key: VulkanSDK-${{ VK_VERSION }}-Installer
+          key: VulkanSDK-${{ env.VK_VERSION }}-Installer
       - name: vulkansdk
         if: steps.cache-vulkansdk.outputs.cache-hit != 'true'
         run: |
