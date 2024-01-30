@@ -37,15 +37,15 @@ jobs:
         id: cache-vulkansdk
         uses: actions/cache@v1
         with:
-          path: "{{ VK_VERSION }}"
-          key: "vulkansdk-linux-x86_64-{{VK_VERSION}}"
+          path: vulkansdk-linux-x86_64-${{ VK_VERSION }}
+          key: vulkansdk-linux-x86_64-${{VK_VERSION}}
       - name: vulkansdk
         if: steps.cache-vulkansdk.outputs.cache-hit != 'true'
         run: |
           wget https://sdk.lunarg.com/sdk/download/$VK_VERSION/linux/vulkansdk-linux-x86_64-$VK_VERSION.tar.xz?Human=true -O vulkansdk-linux-x86_64-$VK_VERSION.tar.xz
           tar -xf vulkansdk-linux-x86_64-$VK_VERSION.tar.xz
-          rm -rf $VK_VERSION/source $VK_VERSION/samples
-          find $VK_VERSION -type f | grep -v -E 'vulkan|glslang' | xargs rm
+          rm -rf vulkansdk-linux-x86_64-$VK_VERSION/source vulkansdk-linux-x86_64-$VK_VERSION/samples
+          find vulkansdk-linux-x86_64-$VK_VERSION -type f | grep -v -E 'vulkan|glslang' | xargs rm
       - name: build
         run: |
           sudo add-apt-repository ppa:ubuntu-toolchain-r/test
@@ -94,8 +94,8 @@ jobs:
         id: cache-vulkansdk
         uses: actions/cache@v1
         with:
-          path: "{{ VULKAN_SDK }}"
-          key: vulkansdk-macos-{{VK_VERSION}}
+          path: ${{ VULKAN_SDK }}
+          key: ${{ VULKAN_SDK }}
       - name: vulkansdk
         if: steps.cache-vulkansdk.outputs.cache-hit != 'true'
         run: |
@@ -161,7 +161,7 @@ jobs:
         uses: actions/cache@v1
         with:
           path: "VulkanSDK"
-          key: VulkanSDK-{{ VK_VERSION }}-Installer
+          key: VulkanSDK-${{ VK_VERSION }}-Installer
       - name: vulkansdk
         if: steps.cache-vulkansdk.outputs.cache-hit != 'true'
         run: |
