@@ -4,7 +4,7 @@ on:
 
 env:
   VK_VERSION: 1.3.261.1
-
+  VULKAN_SDK: vulkan-mac-sdk/macOS
 jobs:
   windows:
     runs-on: windows-latest
@@ -68,7 +68,7 @@ jobs:
       id: cache-vulkansdk
       uses: actions/cache@v1
       with:
-        path: "vulkansdk-macos-{{ VK_VERSION }}"
+        path: "vulkan-mac-sdk"
         key: "vulkansdk-macos-{{ VK_VERSION }}"
     - name: vulkansdk
       if: steps.cache-vulkansdk.outputs.cache-hit != 'true'
@@ -77,28 +77,25 @@ jobs:
         wget https://sdk.lunarg.com/sdk/download/$VK_VERSION/mac/vulkansdk-macos-$VK_VERSION.dmg?Human=true -O vulkansdk-macos-$VK_VERSION.dmg
         hdiutil attach vulkansdk-macos-$VK_VERSION.dmg
         # cp -r /Volumes/vulkansdk-macos-$VK_VERSION .
-        sudo /Volumes/vulkansdk-macos-$VK_VERSION/InstallVulkan.app/Contents/MacOS/InstallVulkan --root `pwd`/vulkansdk-macos-$VK_VERSION --accept-licenses --default-answer --confirm-command install
+        sudo /Volumes/vulkansdk-macos-$VK_VERSION/InstallVulkan.app/Contents/MacOS/InstallVulkan --root `pwd`/vulkan-mac-sdk --accept-licenses --default-answer --confirm-command install
         ls -alh
-        sudo rm -rf vulkansdk-macos-$VK_VERSION/Applications
-        find vulkansdk-macos-$VK_VERSION -type f | grep -v -E 'vulkan|glslang|MoltenVK' | xargs rm
+        find vulkan-mac-sdk -type f | grep -v -E 'vulkan|glslang|MoltenVK' | xargs rm
         hdiutil detach /Volumes/vulkansdk-macos-$VK_VERSION
     - name: build-x86_64
       run: |
-        export VULKAN_SDK=`pwd`/vulkansdk-macos-$VK_VERSION/macOS
         ls -alh vulkan*
         mkdir build-x86_64 && cd build-x86_64
         cmake -DUSE_STATIC_MOLTENVK=ON -DCMAKE_OSX_ARCHITECTURES="x86_64" \
-            -DVulkan_INCLUDE_DIR=`pwd`/../vulkansdk-macos-$VK_VERSION/MoltenVK/include \
-            -DVulkan_LIBRARY=`pwd`/../vulkansdk-macos-$VK_VERSION/MoltenVK/MoltenVK.xcframework/macos-arm64_x86_64/libMoltenVK.a \
+            -DVulkan_INCLUDE_DIR=`pwd`/../$VULKAN_SDK/macOS/include \
+            -DVulkan_LIBRARY=`pwd`/../$VULKAN_SDK/lib/MoltenVK.xcframework/macos-arm64_x86_64/libMoltenVK.a \
             ../src
         cmake --build . -j 3
     - name: build-arm64
       run: |
-        export VULKAN_SDK=`pwd`/vulkansdk-macos-$VK_VERSION/macOS
         sudo xcode-select --reset
         mkdir build-arm64 && cd build-arm64
         cmake -DUSE_STATIC_MOLTENVK=ON -DCMAKE_OSX_ARCHITECTURES="arm64" \
-            -DVulkan_INCLUDE_DIR=`pwd`/../vulkansdk-macos-$VK_VERSION/MoltenVK/include \
-            -DVulkan_LIBRARY=`pwd`/../vulkansdk-macos-$VK_VERSION/MoltenVK/MoltenVK.xcframework/macos-arm64_x86_64/libMoltenVK.a \
+            -DVulkan_INCLUDE_DIR=`pwd`/../$VULKAN_SDK/macOS/include \
+            -DVulkan_LIBRARY=`pwd`/../$VULKAN_SDK/lib/MoltenVK.xcframework/macos-arm64_x86_64/libMoltenVK.a \
             ../src
         cmake --build . -j 3
