@@ -94,8 +94,8 @@ jobs:
         id: cache-vulkansdk
         uses: actions/cache@v1
         with:
-          path: ${{ VULKAN_SDK }}
-          key: ${{ VULKAN_SDK }}
+          path: ${{ env.VULKAN_SDK }}
+          key: ${{ env.VULKAN_SDK }}
       - name: vulkansdk
         if: steps.cache-vulkansdk.outputs.cache-hit != 'true'
         run: |
