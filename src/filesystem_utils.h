@@ -39,6 +39,7 @@ bool is_image_file(const std::string& filename)
 
     // Extract the extension and check if it's an image file extension
     std::string extension = filename.substr(last_dot);
+    std::transform(extension.begin(), extension.end(), extension.begin(), ::tolower);
     return std::find(extensions.begin(), extensions.end(), extension) != extensions.end();
 }
 
@@ -112,10 +113,7 @@ static int list_directory(const path_t& dirpath, std::vector<path_t>& imagepaths
 
         std::string filename(ent->d_name);
 
-        fprintf(stderr, "filename: %s\n", filename.c_str());
-
         if (is_image_file(filename)) {
-            fprintf(stderr, "good filename: %s\n", filename.c_str());
             imagepaths.push_back(path_t(filename));
         }
     }
