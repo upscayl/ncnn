@@ -22,7 +22,7 @@ jobs:
         run: echo ::set-output name=APPNAME::${APPLICATION_NAME}
       - name: get-version
         id: get_version
-        run: echo "VERSION=$(date +'%Y.%m.%d_%H%M%S')" >> "$GITHUB_OUTPUT"
+        run: echo "VERSION=$(date +'%Y%m%d-%H%M%S')" >> "$GITHUB_OUTPUT"
 
   ubuntu:
     needs: [setup]
@@ -212,7 +212,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ needs.setup.outputs.VERSION }}
-          release_name: Release ${{ needs.setup.outputs.VERSION }}
+          release_name: upscayl-bin-${{ needs.setup.outputs.VERSION }}
           draft: false
           prerelease: false
 
