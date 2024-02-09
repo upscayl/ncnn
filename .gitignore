@@ -43,3 +43,4 @@ vulkan-sdk/
 *.dmg
 ncnn/
 libwebp/
+images_out/*

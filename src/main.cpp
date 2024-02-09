@@ -111,7 +111,6 @@ static void print_usage()
     fprintf(stderr, "  -m model-path        folder path to the pre-trained models. default=models\n");
     fprintf(stderr, "  -n model-name        model name (default=realesr-animevideov3, can be realesr-animevideov3 | realesrgan-x4plus | realesrgan-x4plus-anime | realesrnet-x4plus)\n");
     fprintf(stderr, "  -g gpu-id            gpu device to use (default=auto) can be 0,1,2 for multi-gpu\n");
-    fprintf(stderr, "  -c cpu-only          use only CPU for upscaling, instead of vulkan\n");
     fprintf(stderr, "  -j load:proc:save    thread count for load/proc/save (default=1:2:2) can be 1:2,2,2:2 for multi-gpu\n");
     fprintf(stderr, "  -x                   enable tta mode\n");
     fprintf(stderr, "  -f format            output image format (jpg/png/webp, default=ext/png)\n");
@@ -449,7 +448,6 @@ int main(int argc, char **argv)
     int jobs_save = 2;
     int verbose = 0;
     int tta_mode = 0;
-    int cpu_only = 0;
     path_t format = PATHSTR("png");
 
 #if _WIN32
@@ -492,9 +490,6 @@ int main(int argc, char **argv)
             break;
         case L'x':
             tta_mode = 1;
-            break;
-        case L'c':
-            cpu_only = 1;
             break;
         case L'h':
         default:
@@ -541,9 +536,6 @@ int main(int argc, char **argv)
             break;
         case 'x':
             tta_mode = 1;
-            break;
-        case 'c':
-            cpu_only = 1;
             break;
         case 'h':
         default:
@@ -809,7 +801,7 @@ int main(int argc, char **argv)
 
         for (int i = 0; i < use_gpu_count; i++)
         {
-            realesrgan[i] = new RealESRGAN(gpuid[i], tta_mode, cpu_only);
+            realesrgan[i] = new RealESRGAN(gpuid[i], tta_mode);
 
             realesrgan[i]->load(paramfullpath, modelfullpath);
 

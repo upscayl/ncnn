@@ -6,6 +6,7 @@
     "*.html": "html",
     "*.css": "tailwindcss",
     "*.md": "markdown",
+    ".env*": "dotenv",
     "__bits": "cpp",
     "__config": "cpp",
     "__debug": "cpp",
@@ -32,6 +33,7 @@
     "type_traits": "cpp",
     "typeinfo": "cpp",
     "algorithm": "cpp",
-    "vector": "cpp"
+    "vector": "cpp",
+    "string": "cpp"
   }
 }
