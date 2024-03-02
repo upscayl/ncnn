@@ -154,7 +154,7 @@ static path_t get_executable_directory()
 
     return path_t(filepath);
 }
-#elif __APPLE__ // _WIN32
+#elif ! __linux__ // _WIN32
 #include <libproc.h>
 static path_t get_executable_directory()
 {
@@ -174,7 +174,7 @@ static path_t get_executable_directory()
 
     return path_t(filepath);
 }
-#else // __APPLE__
+#else // ! __linux__
 static path_t get_executable_directory()
 {
     char filepath[256];
@@ -185,7 +185,7 @@ static path_t get_executable_directory()
 
     return path_t(filepath);
 }
-#endif // __APPLE__
+#endif // ! __linux__
 
 static bool filepath_is_readable(const path_t& path)
 {
