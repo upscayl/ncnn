@@ -154,7 +154,27 @@ static path_t get_executable_directory()
 
     return path_t(filepath);
 }
-#else // _WIN32
+#elif __APPLE__ // _WIN32
+#include <libproc.h>
+static path_t get_executable_directory()
+{
+    char filepath[256];
+    filepath[0]='\0';
+
+    int pid = getpid();
+    int ret = proc_pidpath(pid, filepath, sizeof(filepath));
+
+    if ( ret <= 0 ) {
+        fprintf(stderr, "PID %d: proc_pidpath ();\n", pid);
+        fprintf(stderr, "    %s\n", strerror(errno));
+    } else {
+        char* slash = strrchr(filepath, '/');
+        slash[1] = '\0';
+    }
+
+    return path_t(filepath);
+}
+#else // __APPLE__
 static path_t get_executable_directory()
 {
     char filepath[256];
@@ -165,7 +185,7 @@ static path_t get_executable_directory()
 
     return path_t(filepath);
 }
-#endif // _WIN32
+#endif // __APPLE__
 
 static bool filepath_is_readable(const path_t& path)
 {
