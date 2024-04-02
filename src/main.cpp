@@ -193,12 +193,13 @@ static void print_usage()
     fprintf(stderr, "  -h                   show this help\n");
     fprintf(stderr, "  -i input-path        input image path (jpg/png/webp) or directory\n");
     fprintf(stderr, "  -o output-path       output image path (jpg/png/webp) or directory\n");
-    fprintf(stderr, "  -s scale             upscale ratio (can be 2, 3, 4. default=4)\n");
+    fprintf(stderr, "  -s model-scale       scale according to the model (can be 2, 3, 4. default=4)\n");
+    fprintf(stderr, "  -os output-scale     custom output scale (can be 2, 3, 4. default=4)\n");
     fprintf(stderr, "  -r resize            resize output to dimension (default=WxH:default), use '-r help' for more details\n");
     fprintf(stderr, "  -c compress          compression of the output image, default 0 and varies to 100\n");
     fprintf(stderr, "  -t tile-size         tile size (>=32/0=auto, default=0) can be 0,0,0 for multi-gpu\n");
     fprintf(stderr, "  -m model-path        folder path to the pre-trained models. default=models\n");
-    fprintf(stderr, "  -n model-name        model name (default=realesr-animevideov3, can be realesr-animevideov3 | realesrgan-x4plus | realesrgan-x4plus-anime | realesrnet-x4plus)\n");
+    fprintf(stderr, "  -n model-name        model name (default=realesrgan-x4plus, can be realesr-animevideov3 | realesrgan-x4plus-anime | realesrnet-x4plus or any other model)\n");
     fprintf(stderr, "  -g gpu-id            gpu device to use (default=auto) can be 0,1,2 for multi-gpu\n");
     fprintf(stderr, "  -j load:proc:save    thread count for load/proc/save (default=1:2:2) can be 1:2,2,2:2 for multi-gpu\n");
     fprintf(stderr, "  -x                   enable tta mode\n");
@@ -446,34 +447,55 @@ public:
     int resizeHeight;
     int resizeMode;
     bool resizeProvided;
+    int outputScale;
+    bool hasOutputScale;
     float compression;
     int verbose;
 };
 
 void resize_output_image(Task &v, const SaveThreadParams *stp)
 {
+    const int originalWidth = v.inimage.w;
+    const int originalHeight = v.inimage.h;
     const int resizeWidth = stp->resizeWidth;
     const int resizeHeight = stp->resizeHeight;
     const bool resizeProvided = stp->resizeProvided;
-
-    if (!resizeProvided || (v.outimage.w == resizeWidth && v.outimage.h == resizeHeight))
-        return;
-
+    const int outputScale = stp->outputScale;
+    const bool hasOutputScale = stp->hasOutputScale;
     int c = v.outimage.elempack;
 
-    stbir_pixel_layout layout = static_cast<stbir_pixel_layout>(c);
+    if (hasOutputScale && !resizeProvided)
+    {
+        fprintf(stderr, "🏞️ Resizing image according to output scale\n");
 
-    // Create a new buffer for the resized image
-    unsigned char *resizedData = (unsigned char *)malloc(resizeWidth * resizeHeight * c);
+        stbir_pixel_layout layout = static_cast<stbir_pixel_layout>(c);
+        // Create a new buffer for the resized image
+        unsigned char *resizedData = (unsigned char *)malloc(originalWidth * outputScale * originalHeight * outputScale * c);
+        stbir_resize_uint8_srgb((unsigned char *)v.outimage.data, v.outimage.w, v.outimage.h, 0,
+                                resizedData, originalWidth * outputScale, originalHeight * outputScale, 0, layout);
+        v.outimage = ncnn::Mat(originalWidth * outputScale, originalHeight * outputScale, c, v.outimage.elemsize);
+        fprintf(stderr, "🏞️ Resized image from %dx%d to %dx%d\n", originalWidth, originalHeight, v.outimage.w, v.outimage.h);
+        return;
+    }
 
-    // Resize the image using stb_image_resize
-    stbir_resize_uint8_srgb((unsigned char *)v.outimage.data, v.outimage.w, v.outimage.h, 0,
-                            resizedData, resizeWidth, resizeHeight, 0, layout);
-
-    // Replace the old image data with the new (resized) image data
-    v.outimage = ncnn::Mat(resizeWidth, resizeHeight, resizedData, (size_t)c, c);
-
-    fprintf(stderr, "Resized sizes %dx%d\n", v.outimage.w, v.outimage.h);
+    if ((!resizeProvided && !hasOutputScale) || (v.outimage.w == resizeWidth && v.outimage.h == resizeHeight))
+    {
+        fprintf(stderr, "⏩ Skipping resize\n");
+        return;
+    }
+    else
+    {
+        fprintf(stderr, "🏞️ Resizing image according to provided dimensions\n");
+        stbir_pixel_layout layout = static_cast<stbir_pixel_layout>(c);
+        // Create a new buffer for the resized image
+        unsigned char *resizedData = (unsigned char *)malloc(resizeWidth * resizeHeight * c);
+        // Resize the image using stb_image_resize
+        stbir_resize_uint8_srgb((unsigned char *)v.outimage.data, v.outimage.w, v.outimage.h, 0,
+                                resizedData, resizeWidth, resizeHeight, 0, layout);
+        // Replace the old image data with the new (resized) image data
+        v.outimage = ncnn::Mat(resizeWidth, resizeHeight, resizedData, (size_t)c, c);
+        fprintf(stderr, "🏞️ Resized image from %dx%d to %dx%d\n", originalWidth, originalHeight, v.outimage.w, v.outimage.h);
+    }
 }
 
 void *save(void *args)
@@ -566,7 +588,7 @@ void *save(void *args)
 #if _WIN32
             fwprintf(stderr, L"encode image %ls failed\n", v.outpath.c_str());
 #else
-            fprintf(stderr, "encode image %s failed\n", v.outpath.c_str());
+            fprintf(stderr, "encode image %s failed - couldn't write the image\n", v.outpath.c_str());
 #endif
         }
     }
@@ -586,11 +608,13 @@ int main(int argc, char **argv)
     int resizeWidth;
     int resizeHeight;
     int resizeMode;
+    int outputScale = 4;
+    bool hasOutputScale = false;
     float compression = 0.00f;
     bool resizeProvided = false;
     std::vector<int> tilesize;
     path_t model = PATHSTR("models");
-    path_t modelname = PATHSTR("realesr-animevideov3");
+    path_t modelname = PATHSTR("realesrgan-x4plus");
     std::vector<int> gpuid;
     int jobs_load = 1;
     std::vector<int> jobs_proc;
@@ -602,7 +626,7 @@ int main(int argc, char **argv)
 #if _WIN32
     setlocale(LC_ALL, "");
     wchar_t opt;
-    while ((opt = getopt(argc, argv, L"i:o:s:r:t:c:m:n:g:j:f:vxh")) != (wchar_t)-1)
+    while ((opt = getopt(argc, argv, L"i:o:s:os:r:t:c:m:n:g:j:f:vxh")) != (wchar_t)-1)
     {
         switch (opt)
         {
@@ -615,7 +639,11 @@ int main(int argc, char **argv)
         case L's':
             scale = _wtoi(optarg);
             break;
-        case 'c':
+        case L'os':
+            outputScale = _wtoi(optarg);
+            hasOutputScale = true;
+            break;
+        case L'c':
             compression = atof(optarg);
             if (compression < 0 || compression > 100)
             {
@@ -670,7 +698,7 @@ int main(int argc, char **argv)
     }
 #else  // _WIN32
     int opt;
-    while ((opt = getopt(argc, argv, "i:o:s:r:t:c:m:n:g:j:f:vxh")) != -1)
+    while ((opt = getopt(argc, argv, "i:o:s:os:r:t:c:m:n:g:j:f:vxh")) != -1)
     {
         switch (opt)
         {
@@ -682,6 +710,10 @@ int main(int argc, char **argv)
             break;
         case 's':
             scale = atoi(optarg);
+            break;
+        case 'os':
+            outputScale = atoi(optarg);
+            hasOutputScale = true;
             break;
         case 'c':
             compression = atof(optarg);
@@ -1040,6 +1072,8 @@ int main(int argc, char **argv)
             stp.resizeProvided = resizeProvided;
             stp.verbose = verbose;
             stp.compression = compression;
+            stp.outputScale = outputScale;
+            stp.hasOutputScale = hasOutputScale;
 
             std::vector<ncnn::Thread *> save_threads(jobs_save);
             for (int i = 0; i < jobs_save; i++)
