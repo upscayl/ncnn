@@ -6,6 +6,7 @@
 #include <vector>
 #include <clocale>
 #include <filesystem>
+
 namespace fs = std::filesystem;
 
 #if _WIN32
@@ -25,6 +26,18 @@ namespace fs = std::filesystem;
 #include "stb_image_write.h"
 #endif // _WIN32
 #include "webp_image.h"
+#define STB_IMAGE_RESIZE2_IMPLEMENTATION
+#include "stb_image_resize2.h"
+
+static const char *resizemodes[] = {
+    "default",      // STBIR_FILTER_DEFAULT
+    "box",          // STBIR_FILTER_BOX
+    "triangle",     // STBIR_FILTER_TRIANGLE
+    "cubicbspline", // STBIR_FILTER_CUBICBSPLINE
+    "catmullrom",   // STBIR_FILTER_CATMULLROM
+    "mitchell",     // STBIR_FILTER_MITCHELL
+    "pointsample"   // STBIR_FILTER_POINT_SAMPLE
+};
 
 #if _WIN32
 #include <wchar.h>
@@ -71,6 +84,52 @@ static std::vector<int> parse_optarg_int_array(const wchar_t *optarg)
 
     return array;
 }
+
+static bool ascii_string_equals(const wchar_t *wide, const char *narrow)
+{
+    size_t widelen = wcslen(wide);
+    size_t narrowlen = strlen(narrow);
+
+    if (widelen != narrowlen)
+        return false;
+
+    for (size_t i = 0; i < widelen; i++)
+    {
+        if (wide[i] != narrow[i])
+            return false;
+    }
+
+    return true;
+}
+
+static bool parse_optarg_resize(const wchar_t *optarg, int *width, int *height, int *mode)
+{
+    *mode = 0; // default
+
+    const wchar_t *colon = wcschr(optarg, L':');
+    if (colon)
+    {
+        bool found = false;
+        const wchar_t *modestr = colon + 1;
+        for (int i = 0; i < (int)(sizeof(resizemodes) / sizeof(resizemodes[0])); i++)
+        {
+            if (ascii_string_equals(modestr, resizemodes[i]))
+            {
+                *mode = i;
+                found = true;
+                break;
+            }
+        }
+        if (!found)
+        {
+            fwprintf(stderr, L"invalid resize mode '%s'\n", modestr);
+            return false;
+        }
+    }
+
+    return swscanf(optarg, L"%dx%d", width, height) == 2;
+}
+
 #else               // _WIN32
 #include <unistd.h> // getopt()
 
@@ -89,13 +148,41 @@ static std::vector<int> parse_optarg_int_array(const char *optarg)
 
     return array;
 }
-#endif              // _WIN32
+
+static bool parse_optarg_resize(const char *optarg, int *width, int *height, int *mode)
+{
+    *mode = 0; // default
+
+    const char *colon = strchr(optarg, ':');
+    if (colon)
+    {
+        bool found = false;
+        const char *modestr = colon + 1;
+        for (int i = 0; i < (int)(sizeof(resizemodes) / sizeof(resizemodes[0])); i++)
+        {
+            if (strcmp(modestr, resizemodes[i]) == 0)
+            {
+                *mode = i;
+                found = true;
+                break;
+            }
+        }
+        if (!found)
+        {
+            fprintf(stderr, "invalid resize mode '%s'\n", modestr);
+            return false;
+        }
+    }
+
+    return sscanf(optarg, "%dx%d", width, height) == 2;
+}
+
+#endif // _WIN32
 
 // ncnn
 #include "cpu.h"
 #include "gpu.h"
 #include "platform.h"
-
 #include "realesrgan.h"
 
 #include "filesystem_utils.h"
@@ -107,6 +194,8 @@ static void print_usage()
     fprintf(stderr, "  -i input-path        input image path (jpg/png/webp) or directory\n");
     fprintf(stderr, "  -o output-path       output image path (jpg/png/webp) or directory\n");
     fprintf(stderr, "  -s scale             upscale ratio (can be 2, 3, 4. default=4)\n");
+    fprintf(stderr, "  -r resize            resize output to dimension (default=WxH:default), use '-r help' for more details\n");
+    fprintf(stderr, "  -c compress          compression of the output image, default 0 and varies to 100\n");
     fprintf(stderr, "  -t tile-size         tile size (>=32/0=auto, default=0) can be 0,0,0 for multi-gpu\n");
     fprintf(stderr, "  -m model-path        folder path to the pre-trained models. default=models\n");
     fprintf(stderr, "  -n model-name        model name (default=realesr-animevideov3, can be realesr-animevideov3 | realesrgan-x4plus | realesrgan-x4plus-anime | realesrnet-x4plus)\n");
@@ -115,6 +204,23 @@ static void print_usage()
     fprintf(stderr, "  -x                   enable tta mode\n");
     fprintf(stderr, "  -f format            output image format (jpg/png/webp, default=ext/png)\n");
     fprintf(stderr, "  -v                   verbose output\n");
+}
+
+static void print_resize_usage()
+{
+    printf("'-r widthxheight:filter' argument usage:\n\n");
+
+    printf("For example '-r 1920x1080' or '-r 1920x1080:default' will force all output images to be\n");
+    printf("resized to 1920x1080 with the default filter if they aren't already.\n\n");
+
+    printf("Avaliable filters:\n");
+    printf("  default       - Automatically decide\n");
+    printf("  box           - A trapezoid w/1-pixel wide ramps, same result as box for integer scale ratios\n");
+    printf("  triangle      - On upsampling, produces same results as bilinear texture filtering\n");
+    printf("  cubicbspline  - The cubic b-spline (aka Mitchell-Netrevalli with B=1,C=0), gaussian-esque\n");
+    printf("  catmullrom    - An interpolating cubic spline\n");
+    printf("  mitchell      - Mitchell-Netrevalli filter with B=1/3, C=1/3\n");
+    printf("  pointsample   - Simple point sampling\n");
 }
 
 class Task
@@ -281,7 +387,7 @@ void *load(void *args)
             path_t ext = get_file_extension(v.outpath);
             if (c == 4 && (ext == PATHSTR("jpg") || ext == PATHSTR("JPG") || ext == PATHSTR("jpeg") || ext == PATHSTR("JPEG")))
             {
-                path_t output_filename2 = ltp->output_files[i] + PATHSTR(".png");
+                path_t output_filename2 = get_file_name_without_extension(ltp->output_files[i]) + PATHSTR('.') + ext;
                 v.outpath = output_filename2;
 #if _WIN32
                 fwprintf(stderr, L"image %ls has alpha channel ! %ls will output %ls\n", imagepath.c_str(), imagepath.c_str(), output_filename2.c_str());
@@ -336,8 +442,39 @@ void *proc(void *args)
 class SaveThreadParams
 {
 public:
+    int resizeWidth;
+    int resizeHeight;
+    int resizeMode;
+    bool resizeProvided;
+    float compression;
     int verbose;
 };
+
+void resize_output_image(Task &v, const SaveThreadParams *stp)
+{
+    const int resizeWidth = stp->resizeWidth;
+    const int resizeHeight = stp->resizeHeight;
+    const bool resizeProvided = stp->resizeProvided;
+
+    if (!resizeProvided || (v.outimage.w == resizeWidth && v.outimage.h == resizeHeight))
+        return;
+
+    int c = v.outimage.elempack;
+
+    stbir_pixel_layout layout = static_cast<stbir_pixel_layout>(c);
+
+    // Create a new buffer for the resized image
+    unsigned char *resizedData = (unsigned char *)malloc(resizeWidth * resizeHeight * c);
+
+    // Resize the image using stb_image_resize
+    stbir_resize_uint8_srgb((unsigned char *)v.outimage.data, v.outimage.w, v.outimage.h, 0,
+                            resizedData, resizeWidth, resizeHeight, 0, layout);
+
+    // Replace the old image data with the new (resized) image data
+    v.outimage = ncnn::Mat(resizeWidth, resizeHeight, resizedData, (size_t)c, c);
+
+    fprintf(stderr, "Resized sizes %dx%d\n", v.outimage.w, v.outimage.h);
+}
 
 void *save(void *args)
 {
@@ -370,6 +507,8 @@ void *save(void *args)
             }
         }
 
+        resize_output_image(v, stp);
+
         int success = 0;
 
         path_t ext = get_file_extension(v.outpath);
@@ -386,13 +525,18 @@ void *save(void *args)
 
         if (ext == PATHSTR("webp") || ext == PATHSTR("WEBP"))
         {
-            success = webp_save(v.outpath.c_str(), v.outimage.w, v.outimage.h, v.outimage.elempack, (const unsigned char *)v.outimage.data);
+            success = webp_save(v.outpath.c_str(), v.outimage.w, v.outimage.h, v.outimage.elempack, (const unsigned char *)v.outimage.data, 100 - (int)stp->compression);
         }
         else if (ext == PATHSTR("png") || ext == PATHSTR("PNG"))
         {
 #if _WIN32
             success = wic_encode_image(v.outpath.c_str(), v.outimage.w, v.outimage.h, v.outimage.elempack, v.outimage.data);
 #else
+            // if compression is more than 0 make stbi_write_png_compression_level = 9
+            if (stp->compression > 0)
+            {
+                stbi_write_png_compression_level = 9;
+            }
             success = stbi_write_png(v.outpath.c_str(), v.outimage.w, v.outimage.h, v.outimage.elempack, v.outimage.data, 0);
 #endif
         }
@@ -401,7 +545,7 @@ void *save(void *args)
 #if _WIN32
             success = wic_encode_jpeg_image(v.outpath.c_str(), v.outimage.w, v.outimage.h, v.outimage.elempack, v.outimage.data);
 #else
-            success = stbi_write_jpg(v.outpath.c_str(), v.outimage.w, v.outimage.h, v.outimage.elempack, v.outimage.data, 100);
+            success = stbi_write_jpg(v.outpath.c_str(), v.outimage.w, v.outimage.h, v.outimage.elempack, v.outimage.data, 100 - (int)stp->compression);
 #endif
         }
         if (success)
@@ -439,6 +583,11 @@ int main(int argc, char **argv)
     path_t inputpath;
     path_t outputpath;
     int scale = 4;
+    int resizeWidth;
+    int resizeHeight;
+    int resizeMode;
+    float compression = 0.00f;
+    bool resizeProvided = false;
     std::vector<int> tilesize;
     path_t model = PATHSTR("models");
     path_t modelname = PATHSTR("realesr-animevideov3");
@@ -453,7 +602,7 @@ int main(int argc, char **argv)
 #if _WIN32
     setlocale(LC_ALL, "");
     wchar_t opt;
-    while ((opt = getopt(argc, argv, L"i:o:s:t:m:n:g:j:f:vxch")) != (wchar_t)-1)
+    while ((opt = getopt(argc, argv, L"i:o:s:r:t:c:m:n:g:j:f:vxh")) != (wchar_t)-1)
     {
         switch (opt)
         {
@@ -465,6 +614,28 @@ int main(int argc, char **argv)
             break;
         case L's':
             scale = _wtoi(optarg);
+            break;
+        case 'c':
+            compression = atof(optarg);
+            if (compression < 0 || compression > 100)
+            {
+                fprintf(stderr, "invalid compression argument, should be between 0 and 100\n");
+                return -1;
+            }
+            compression = round(compression / 10.0) * 10;
+            break;
+        case L'r':
+            if (wcscmp(optarg, L"help") == 0)
+            {
+                print_resize_usage();
+                return -1;
+            }
+            if (!parse_optarg_resize(optarg, &resizeWidth, &resizeHeight, &resizeMode))
+            {
+                fwprintf(stderr, L"invalid resize argument\n");
+                return -1;
+            }
+            resizeProvided = true;
             break;
         case L't':
             tilesize = parse_optarg_int_array(optarg);
@@ -499,7 +670,7 @@ int main(int argc, char **argv)
     }
 #else  // _WIN32
     int opt;
-    while ((opt = getopt(argc, argv, "i:o:s:t:m:n:g:j:f:vxch")) != -1)
+    while ((opt = getopt(argc, argv, "i:o:s:r:t:c:m:n:g:j:f:vxh")) != -1)
     {
         switch (opt)
         {
@@ -511,6 +682,28 @@ int main(int argc, char **argv)
             break;
         case 's':
             scale = atoi(optarg);
+            break;
+        case 'c':
+            compression = atof(optarg);
+            if (compression < 0 || compression > 100)
+            {
+                fprintf(stderr, "invalid compression argument, should be between 0 and 100\n");
+                return -1;
+            }
+            compression = round(compression / 10.0) * 10;
+            break;
+        case 'r':
+            if (strcmp(optarg, "help") == 0)
+            {
+                print_resize_usage();
+                return -1;
+            }
+            if (!parse_optarg_resize(optarg, &resizeWidth, &resizeHeight, &resizeMode))
+            {
+                fprintf(stderr, "invalid resize argument\n");
+                return -1;
+            }
+            resizeProvided = true;
             break;
         case 't':
             tilesize = parse_optarg_int_array(optarg);
@@ -588,8 +781,7 @@ int main(int argc, char **argv)
 
     if (!path_is_directory(outputpath))
     {
-        // guess format from outputpath no matter what format argument specified
-        path_t ext = get_file_extension(outputpath);
+        path_t ext = format;
 
         if (ext == PATHSTR("png") || ext == PATHSTR("PNG"))
         {
@@ -842,7 +1034,12 @@ int main(int argc, char **argv)
 
             // save image
             SaveThreadParams stp;
+            stp.resizeWidth = resizeWidth;
+            stp.resizeHeight = resizeHeight;
+            stp.resizeMode = resizeMode;
+            stp.resizeProvided = resizeProvided;
             stp.verbose = verbose;
+            stp.compression = compression;
 
             std::vector<ncnn::Thread *> save_threads(jobs_save);
             for (int i = 0; i < jobs_save; i++)

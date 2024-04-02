@@ -50,7 +50,7 @@ unsigned char* webp_load(const unsigned char* buffer, int len, int* w, int* h, i
 #if _WIN32
 int webp_save(const wchar_t* filepath, int w, int h, int c, const unsigned char* pixeldata)
 #else
-int webp_save(const char* filepath, int w, int h, int c, const unsigned char* pixeldata)
+int webp_save(const char* filepath, int w, int h, int c, const unsigned char* pixeldata, int quality)
 #endif
 {
     int ret = 0;
@@ -60,25 +60,50 @@ int webp_save(const char* filepath, int w, int h, int c, const unsigned char* pi
 
     FILE* fp = 0;
 
-    if (c == 3)
+    if (quality >= 100)
     {
-#if _WIN32
-        length = WebPEncodeLosslessBGR(pixeldata, w, h, w * 3, &output);
-#else
-        length = WebPEncodeLosslessRGB(pixeldata, w, h, w * 3, &output);
-#endif
+        if (c == 3)
+        {
+            #if _WIN32
+                length = WebPEncodeLosslessBGR(pixeldata, w, h, w * 3, &output);
+            #else
+                length = WebPEncodeLosslessRGB(pixeldata, w, h, w * 3, &output);
+            #endif
+        }
+        else if (c == 4)
+        {
+            #if _WIN32
+                length = WebPEncodeLosslessBGRA(pixeldata, w, h, w * 4, &output);
+            #else
+                length = WebPEncodeLosslessRGBA(pixeldata, w, h, w * 4, &output);
+            #endif
+        }
+        else
+        {
+            // unsupported channel type
+        }
     }
-    else if (c == 4)
-    {
-#if _WIN32
-        length = WebPEncodeLosslessBGRA(pixeldata, w, h, w * 4, &output);
-#else
-        length = WebPEncodeLosslessRGBA(pixeldata, w, h, w * 4, &output);
-#endif
-    }
-    else
-    {
-        // unsupported channel type
+    else {
+        if (c == 3)
+        {
+            #if _WIN32
+                length = WebPEncodeBGR(pixeldata, w, h, w * 3, &output);
+            #else
+                length = WebPEncodeRGB(pixeldata, w, h, w * 3, quality, &output);
+            #endif
+        }
+        else if (c == 4)
+        {
+            #if _WIN32
+                length = WebPEncodeBGRA(pixeldata, w, h, w * 4, &output);
+            #else
+                length = WebPEncodeRGBA(pixeldata, w, h, w * 4, quality, &output);
+            #endif
+        }
+        else
+        {
+            // unsupported channel type
+        }
     }
 
     if (length == 0)
