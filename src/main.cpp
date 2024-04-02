@@ -455,47 +455,57 @@ public:
 
 void resize_output_image(Task &v, const SaveThreadParams *stp)
 {
-    const int originalWidth = v.inimage.w;
-    const int originalHeight = v.inimage.h;
     const int resizeWidth = stp->resizeWidth;
     const int resizeHeight = stp->resizeHeight;
     const bool resizeProvided = stp->resizeProvided;
-    const int outputScale = stp->outputScale;
-    const bool hasOutputScale = stp->hasOutputScale;
+
+    if (!resizeProvided || (v.outimage.w == resizeWidth && v.outimage.h == resizeHeight))
+    {
+        fprintf(stderr, "🏞️ Resizing image according to desired resolution\n");
+        return;
+    }
+
+    fprintf(stderr, "🏞️ Resizing image according to desired resolution\n");
+
     int c = v.outimage.elempack;
 
-    if (hasOutputScale && !resizeProvided)
-    {
-        fprintf(stderr, "🏞️ Resizing image according to output scale\n");
+    stbir_pixel_layout layout = static_cast<stbir_pixel_layout>(c);
 
-        stbir_pixel_layout layout = static_cast<stbir_pixel_layout>(c);
-        // Create a new buffer for the resized image
-        unsigned char *resizedData = (unsigned char *)malloc(originalWidth * outputScale * originalHeight * outputScale * c);
-        stbir_resize_uint8_srgb((unsigned char *)v.outimage.data, v.outimage.w, v.outimage.h, 0,
-                                resizedData, originalWidth * outputScale, originalHeight * outputScale, 0, layout);
-        v.outimage = ncnn::Mat(originalWidth * outputScale, originalHeight * outputScale, c, v.outimage.elemsize);
-        fprintf(stderr, "🏞️ Resized image from %dx%d to %dx%d\n", originalWidth, originalHeight, v.outimage.w, v.outimage.h);
-        return;
-    }
+    // Create a new buffer for the resized image
+    unsigned char *resizedData = (unsigned char *)malloc(resizeWidth * resizeHeight * c);
 
-    if ((!resizeProvided && !hasOutputScale) || (v.outimage.w == resizeWidth && v.outimage.h == resizeHeight))
-    {
-        fprintf(stderr, "⏩ Skipping resize\n");
+    // Resize the image using stb_image_resize
+    stbir_resize_uint8_srgb((unsigned char *)v.outimage.data, v.outimage.w, v.outimage.h, 0, resizedData, resizeWidth, resizeHeight, 0, layout);
+
+    // Replace the old image data with the new (resized) image data
+    v.outimage = ncnn::Mat(resizeWidth, resizeHeight, resizedData, (size_t)c, c);
+
+    fprintf(stderr, "🏞️ Resized image from %dx%d to %dx%d\n", v.inimage.w, v.inimage.h, v.outimage.w, v.outimage.h);
+}
+
+void scale_output_image(Task &v, const SaveThreadParams *stp)
+{
+    const int originalWidth = v.inimage.w;
+    const int originalHeight = v.inimage.h;
+    const bool hasOutputScale = stp->hasOutputScale;
+    const int outputScale = stp->outputScale;
+    const int outputWidth = originalWidth * outputScale;
+    const int outputHeight = originalHeight * outputScale;
+
+    if (!hasOutputScale)
         return;
-    }
-    else
-    {
-        fprintf(stderr, "🏞️ Resizing image according to provided dimensions\n");
-        stbir_pixel_layout layout = static_cast<stbir_pixel_layout>(c);
-        // Create a new buffer for the resized image
-        unsigned char *resizedData = (unsigned char *)malloc(resizeWidth * resizeHeight * c);
-        // Resize the image using stb_image_resize
-        stbir_resize_uint8_srgb((unsigned char *)v.outimage.data, v.outimage.w, v.outimage.h, 0,
-                                resizedData, resizeWidth, resizeHeight, 0, layout);
-        // Replace the old image data with the new (resized) image data
-        v.outimage = ncnn::Mat(resizeWidth, resizeHeight, resizedData, (size_t)c, c);
-        fprintf(stderr, "🏞️ Resized image from %dx%d to %dx%d\n", originalWidth, originalHeight, v.outimage.w, v.outimage.h);
-    }
+
+    int c = v.outimage.elempack;
+
+    fprintf(stderr, "🏞️ Resizing image according to output scale\n");
+
+    stbir_pixel_layout layout = static_cast<stbir_pixel_layout>(c);
+    // Create a new buffer for the resized image
+    unsigned char *resizedData = (unsigned char *)malloc(outputWidth * outputHeight * c);
+    stbir_resize_uint8_srgb((unsigned char *)v.outimage.data, v.outimage.w, v.outimage.h, 0, resizedData, outputWidth, outputHeight, 0, layout);
+    v.outimage = ncnn::Mat(outputWidth, outputHeight, c, v.outimage.elemsize);
+    fprintf(stderr, "🏞️ Resized image from %dx%d to %dx%d\n", originalWidth, originalHeight, outputWidth, outputHeight);
+    return;
 }
 
 void *save(void *args)
@@ -529,7 +539,14 @@ void *save(void *args)
             }
         }
 
-        resize_output_image(v, stp);
+        if (stp->outputScale)
+        {
+            scale_output_image(v, stp);
+        }
+        else if (stp->resizeProvided)
+        {
+            resize_output_image(v, stp);
+        }
 
         int success = 0;
 
