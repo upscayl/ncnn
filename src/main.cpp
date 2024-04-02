@@ -503,7 +503,7 @@ void scale_output_image(Task &v, const SaveThreadParams *stp)
     // Create a new buffer for the resized image
     unsigned char *resizedData = (unsigned char *)malloc(outputWidth * outputHeight * c);
     stbir_resize_uint8_srgb((unsigned char *)v.outimage.data, v.outimage.w, v.outimage.h, 0, resizedData, outputWidth, outputHeight, 0, layout);
-    v.outimage = ncnn::Mat(outputWidth, outputHeight, c, v.outimage.elemsize);
+    v.outimage = ncnn::Mat(outputWidth, outputHeight, resizedData, (size_t)v.outimage.elemsize, v.outimage.elemsize);
     fprintf(stderr, "🏞️ Resized image from %dx%d to %dx%d\n", originalWidth, originalHeight, outputWidth, outputHeight);
 }
 
