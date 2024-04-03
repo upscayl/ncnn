@@ -557,7 +557,7 @@ void *save(void *args)
 
         if (!fs::exists(parent_path))
         {
-            std::wcout << "📂 Creating directory: " << parent_path << "" << std::endl;
+            fprintf(stderr, "📂 Creating directory: %ls\n", parent_path.c_str());
             fs::create_directories(parent_path);
         }
 
