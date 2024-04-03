@@ -461,7 +461,7 @@ void resize_output_image(Task &v, const SaveThreadParams *stp)
 
     if (!resizeProvided || (v.outimage.w == resizeWidth && v.outimage.h == resizeHeight))
     {
-        fprintf(stderr, "🏞️ Resizing image according to desired resolution\n");
+        fprintf(stderr, "⏩ Skipping resize\n");
         return;
     }
 
@@ -538,11 +538,12 @@ void *save(void *args)
             }
         }
 
-        if (stp->outputScale)
+        if (stp->hasOutputScale)
         {
             scale_output_image(v, stp);
         }
-        else if (stp->resizeProvided)
+
+        if (stp->resizeProvided && !stp->hasOutputScale)
         {
             resize_output_image(v, stp);
         }
@@ -644,7 +645,7 @@ int main(int argc, char **argv)
 #if _WIN32
     setlocale(LC_ALL, "");
     wchar_t opt;
-    while ((opt = getopt(argc, argv, L"i:o:s:z:r:t:c:m:n:g:j:f:vxh")) != (wchar_t)-1)
+    while ((opt = getopt(argc, argv, L"i:o:z:s:r:t:c:m:n:g:j:f:vxh")) != (wchar_t)-1)
     {
         switch (opt)
         {
@@ -654,10 +655,10 @@ int main(int argc, char **argv)
         case L'o':
             outputpath = optarg;
             break;
-        case L's':
+        case L'z':
             scale = _wtoi(optarg);
             break;
-        case L'z':
+        case L's':
             outputScale = _wtoi(optarg);
             hasOutputScale = true;
             break;
@@ -717,7 +718,7 @@ int main(int argc, char **argv)
 #else  // _WIN32
     int opt;
     fprintf(stderr, "🚀 Starting Upscayl - Copyright © 2024\n");
-    while ((opt = getopt(argc, argv, "i:o:s:z:r:t:c:m:n:g:j:f:vxh")) != -1)
+    while ((opt = getopt(argc, argv, "i:o:z:s:r:t:c:m:n:g:j:f:vxh")) != -1)
     {
         switch (opt)
         {
@@ -727,10 +728,10 @@ int main(int argc, char **argv)
         case 'o':
             outputpath = optarg;
             break;
-        case 's':
+        case 'z':
             scale = atoi(optarg);
             break;
-        case 'z':
+        case 's':
             outputScale = atoi(optarg);
             hasOutputScale = true;
             break;
