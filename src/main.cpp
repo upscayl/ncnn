@@ -169,7 +169,7 @@ static bool parse_optarg_resize(const char *optarg, int *width, int *height, int
         }
         if (!found)
         {
-            fprintf(stderr, "invalid resize mode '%s'\n", modestr);
+            fprintf(stderr, "🚨 Error: Invalid resize mode '%s'\n", modestr);
             return false;
         }
     }
@@ -193,8 +193,8 @@ static void print_usage()
     fprintf(stderr, "  -h                   show this help\n");
     fprintf(stderr, "  -i input-path        input image path (jpg/png/webp) or directory\n");
     fprintf(stderr, "  -o output-path       output image path (jpg/png/webp) or directory\n");
-    fprintf(stderr, "  -s model-scale       scale according to the model (can be 2, 3, 4. default=4)\n");
-    fprintf(stderr, "  -z output-scale     custom output scale (can be 2, 3, 4. default=4)\n");
+    fprintf(stderr, "  -z model-scale       scale according to the model (can be 2, 3, 4. default=4)\n");
+    fprintf(stderr, "  -s output-scale      custom output scale (can be 2, 3, 4. default=4)\n");
     fprintf(stderr, "  -r resize            resize output to dimension (default=WxH:default), use '-r help' for more details\n");
     fprintf(stderr, "  -c compress          compression of the output image, default 0 and varies to 100\n");
     fprintf(stderr, "  -t tile-size         tile size (>=32/0=auto, default=0) can be 0,0,0 for multi-gpu\n");
@@ -393,7 +393,7 @@ void *load(void *args)
 #if _WIN32
                 fwprintf(stderr, L"image %ls has alpha channel ! %ls will output %ls\n", imagepath.c_str(), imagepath.c_str(), output_filename2.c_str());
 #else  // _WIN32
-                fprintf(stderr, "image %s has alpha channel ! %s will output %s\n", imagepath.c_str(), imagepath.c_str(), output_filename2.c_str());
+                fprintf(stderr, "ℹ️ Info: Image %s has alpha channel!", imagepath.c_str(), imagepath.c_str(), output_filename2.c_str());
 #endif // _WIN32
             }
 
@@ -404,7 +404,7 @@ void *load(void *args)
 #if _WIN32
             fwprintf(stderr, L"decode image %ls failed\n", imagepath.c_str());
 #else  // _WIN32
-            fprintf(stderr, "decode image %s failed\n", imagepath.c_str());
+            fprintf(stderr, "🚨 Error: Couldn't read the image '%s'!\n", imagepath.c_str());
 #endif // _WIN32
         }
     }
@@ -557,7 +557,7 @@ void *save(void *args)
 
         if (!fs::exists(parent_path))
         {
-            std::wcout << "Create folder: [" << parent_path << "]." << std::endl;
+            std::wcout << "📂 Creating directory: " << parent_path << "" << std::endl;
             fs::create_directories(parent_path);
         }
 
@@ -588,7 +588,7 @@ void *save(void *args)
         }
         if (success)
         {
-            fprintf(stderr, "Upscayl Successful\n");
+            fprintf(stderr, "\n🙌 Upscayled Successfully!\n");
 
             if (verbose)
             {
@@ -602,9 +602,9 @@ void *save(void *args)
         else
         {
 #if _WIN32
-            fwprintf(stderr, L"encode image %ls failed\n", v.outpath.c_str());
+            fwprintf(stderr, L"🚨 Error: Couldn't write the image %s\n", v.outpath.c_str());
 #else
-            fprintf(stderr, "encode image %s failed - couldn't write the image\n", v.outpath.c_str());
+            fprintf(stderr, "🚨 Error: Couldn't write the image %s\n", v.outpath.c_str());
 #endif
         }
     }
@@ -735,7 +735,7 @@ int main(int argc, char **argv)
             compression = atof(optarg);
             if (compression < 0 || compression > 100)
             {
-                fprintf(stderr, "invalid compression argument, should be between 0 and 100\n");
+                fprintf(stderr, "🚨 Error: Invalid compression value, it should be between 0 and 100!\n");
                 return -1;
             }
             compression = round(compression / 10.0) * 10;
@@ -748,7 +748,7 @@ int main(int argc, char **argv)
             }
             if (!parse_optarg_resize(optarg, &resizeWidth, &resizeHeight, &resizeMode))
             {
-                fprintf(stderr, "invalid resize argument\n");
+                fprintf(stderr, "🚨 Error: Invalid resize value!\n");
                 return -1;
             }
             resizeProvided = true;
@@ -793,7 +793,7 @@ int main(int argc, char **argv)
 
     if (tilesize.size() != (gpuid.empty() ? 1 : gpuid.size()) && !tilesize.empty())
     {
-        fprintf(stderr, "invalid tilesize argument\n");
+        fprintf(stderr, "🚨 Error: Invalid tile size!\n");
         return -1;
     }
 
@@ -801,20 +801,20 @@ int main(int argc, char **argv)
     {
         if (tilesize[i] != 0 && tilesize[i] < 32)
         {
-            fprintf(stderr, "invalid tilesize argument\n");
+            fprintf(stderr, "🚨 Error: Invalid tile size!\n");
             return -1;
         }
     }
 
     if (jobs_load < 1 || jobs_save < 1)
     {
-        fprintf(stderr, "invalid thread count argument\n");
+        fprintf(stderr, "🚨 Error: Invalid thread count!\n");
         return -1;
     }
 
     if (jobs_proc.size() != (gpuid.empty() ? 1 : gpuid.size()) && !jobs_proc.empty())
     {
-        fprintf(stderr, "invalid jobs_proc thread count argument\n");
+        fprintf(stderr, "🚨 Error: invalid jobs_proc thread count!\n");
         return -1;
     }
 
@@ -822,7 +822,7 @@ int main(int argc, char **argv)
     {
         if (jobs_proc[i] < 1)
         {
-            fprintf(stderr, "invalid jobs_proc thread count argument\n");
+            fprintf(stderr, "🚨 Error: Invalid jobs_proc thread count argument!\n");
             return -1;
         }
     }
@@ -845,14 +845,14 @@ int main(int argc, char **argv)
         }
         else
         {
-            fprintf(stderr, "invalid outputpath extension type\n");
+            fprintf(stderr, "🚨 Error: Invalid output path extension or type!\n");
             return -1;
         }
     }
 
     if (format != PATHSTR("png") && format != PATHSTR("webp") && format != PATHSTR("jpg"))
     {
-        fprintf(stderr, "invalid format argument\n");
+        fprintf(stderr, "🚨 Error: Invalid format provided!\n");
         return -1;
     }
 
@@ -886,7 +886,7 @@ int main(int argc, char **argv)
 #if _WIN32
                     fwprintf(stderr, L"both %ls and %ls output %ls ! %ls will output %ls\n", filename.c_str(), last_filename.c_str(), output_filename.c_str(), filename.c_str(), output_filename2.c_str());
 #else
-                    fprintf(stderr, "both %s and %s output %s ! %s will output %s\n", filename.c_str(), last_filename.c_str(), output_filename.c_str(), filename.c_str(), output_filename2.c_str());
+                    fprintf(stderr, "⚠️ Warning: both %s and %s output %s! %s will output %s\n", filename.c_str(), last_filename.c_str(), output_filename.c_str(), filename.c_str(), output_filename2.c_str());
 #endif
                     output_filename = output_filename2;
                 }
@@ -907,7 +907,7 @@ int main(int argc, char **argv)
         }
         else
         {
-            fprintf(stderr, "inputpath and outputpath must be either file or directory at the same time\n");
+            fprintf(stderr, "🚨 Error: Input path and Output path both must be either a file or a directory!\n");
             return -1;
         }
     }
@@ -920,7 +920,7 @@ int main(int argc, char **argv)
     }
     else
     {
-        fprintf(stderr, "unknown model dir type\n");
+        fprintf(stderr, "🚨 Error: Unknown model dir type. Make sure that the model directory is called 'models' with *.param and *.bin files inside it.\n");
         return -1;
     }
 
@@ -952,6 +952,43 @@ int main(int argc, char **argv)
 #else
     char parampath[256];
     char modelpath[256];
+
+    // Check if modelname includes scale
+    if (modelname.find(PATHSTR("x1")) != path_t::npos || modelname.find(PATHSTR("1x")) != path_t::npos)
+    {
+        fprintf(stderr, "✨ Detected scale x1\n");
+        scale = 1;
+    }
+    else if (modelname.find(PATHSTR("x2")) != path_t::npos || modelname.find(PATHSTR("2x")) != path_t::npos)
+    {
+        fprintf(stderr, "✨ Detected scale x2\n");
+        scale = 2;
+    }
+    else if (modelname.find(PATHSTR("x3")) != path_t::npos || modelname.find(PATHSTR("3x")) != path_t::npos)
+    {
+        fprintf(stderr, "✨ Detected scale x3\n");
+        scale = 3;
+    }
+    else if (modelname.find(PATHSTR("x4")) != path_t::npos || modelname.find(PATHSTR("4x")) != path_t::npos)
+    {
+        fprintf(stderr, "✨ Detected scale x4\n");
+        scale = 4;
+    }
+    else if (modelname.find(PATHSTR("x8")) != path_t::npos || modelname.find(PATHSTR("8x")) != path_t::npos)
+    {
+        fprintf(stderr, "✨ Detected scale x8\n");
+        scale = 8;
+    }
+    else if (modelname.find(PATHSTR("x16")) != path_t::npos || modelname.find(PATHSTR("16x")) != path_t::npos)
+    {
+        fprintf(stderr, "✨ Detected scale x16\n");
+        scale = 16;
+    }
+    else
+    {
+        fprintf(stderr, "🚨 Error: The model name doesn't contain scale. Please make sure that the model name contains x2, x3, x4, etc. or 2x, x3, x4, etc.\n");
+        return -1;
+    }
 
     if (modelname == PATHSTR("realesr-animevideov3"))
     {
@@ -1000,7 +1037,7 @@ int main(int argc, char **argv)
     {
         if (gpuid[i] < 0 || gpuid[i] >= gpu_count)
         {
-            fprintf(stderr, "invalid gpu device\n");
+            fprintf(stderr, "🚨 Error: Invalid GPU Device\n");
 
             ncnn::destroy_gpu_instance();
             return -1;
