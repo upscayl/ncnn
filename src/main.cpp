@@ -590,7 +590,7 @@ void *save(void *args)
         }
         if (success)
         {
-            fprintf(stderr, "\n🙌 Upscayled Successfully!\n");
+            fprintf(stderr, "🙌 Upscayled Successfully!\n");
 
             if (verbose)
             {
