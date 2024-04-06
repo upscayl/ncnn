@@ -5,7 +5,7 @@ on:
 env:
   DEVELOPER_DIR: /Applications/Xcode.app/Contents/Developer
   APPLICATION_NAME: upscayl-bin
-  VK_VERSION: 1.3.275.0
+  VK_VERSION: 1.3.280.0
   MOLTEN_VK_INCLUDE_PATH: "macOS/include/"
   MOLTEN_VK_LIB_PATH: "macOS/lib/MoltenVK.xcframework/macos-arm64_x86_64/libMoltenVK.a"
   VULKAN_SDK_MAC: "vulkan-mac-sdk"
