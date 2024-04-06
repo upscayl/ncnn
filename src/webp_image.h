@@ -88,7 +88,7 @@ int webp_save(const char *filepath, int w, int h, int c, const unsigned char *pi
         if (c == 3)
         {
 #if _WIN32
-            length = WebPEncodeBGR(pixeldata, w, h, w * 3, &output);
+            length = WebPEncodeBGR(pixeldata, w, h, w * 3, quality, &output);
 #else
             length = WebPEncodeRGB(pixeldata, w, h, w * 3, quality, &output);
 #endif
@@ -96,7 +96,7 @@ int webp_save(const char *filepath, int w, int h, int c, const unsigned char *pi
         else if (c == 4)
         {
 #if _WIN32
-            length = WebPEncodeBGRA(pixeldata, w, h, w * 4, &output);
+            length = WebPEncodeBGRA(pixeldata, w, h, w * 4, quality, &output);
 #else
             length = WebPEncodeRGBA(pixeldata, w, h, w * 4, quality, &output);
 #endif
