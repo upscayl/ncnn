@@ -754,7 +754,7 @@ int main(int argc, char **argv)
 #else  // _WIN32
     int opt;
     fprintf(stderr, "🚀 Starting Upscayl - Copyright © 2024\n");
-    while ((opt = getopt(argc, argv, "i:o:z:s:r:t:c:m:n:g:j:f:vxh")) != -1)
+    while ((opt = getopt(argc, argv, "i:o:z:s:r:w:t:c:m:n:g:j:f:vxh")) != -1)
     {
         switch (opt)
         {
