@@ -667,7 +667,7 @@ int main(int argc, char **argv)
             hasOutputScale = true;
             break;
         case L'c':
-            compression = atof(optarg);
+            compression = _wtof(optarg);
             if (compression < 0 || compression > 100)
             {
                 fprintf(stderr, "invalid compression argument, should be between 0 and 100\n");
