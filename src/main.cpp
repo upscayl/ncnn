@@ -576,6 +576,10 @@ void *save(void *args)
             // if compression is more than 0 make stbi_write_png_compression_level = 9
             if (stp->compression > 0)
             {
+                stbi_write_png_compression_level = stp->compression;
+            }
+            else
+            {
                 stbi_write_png_compression_level = 9;
             }
             success = stbi_write_png(v.outpath.c_str(), v.outimage.w, v.outimage.h, v.outimage.elempack, v.outimage.data, 0);
