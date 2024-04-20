@@ -102,7 +102,7 @@ static bool ascii_string_equals(const wchar_t *wide, const char *narrow)
     return true;
 }
 
-static bool parse_optarg_resize(const wchar_t *optarg, int *width, int *height, int *mode)
+static bool parse_optarg_resize(const wchar_t *optarg, int *width, int *height, int *mode, bool hasCustomWidth = false)
 {
     *mode = 0; // default
 
@@ -122,9 +122,14 @@ static bool parse_optarg_resize(const wchar_t *optarg, int *width, int *height, 
         }
         if (!found)
         {
-            fwprintf(stderr, L"invalid resize mode '%s'\n", modestr);
+            fwprintf(stderr, L"🚨 Error: Invalid resize mode '%s'\n", modestr);
             return false;
         }
+    }
+
+    if (hasCustomWidth)
+    {
+        return swscanf(optarg, L"%d", width) == 1;
     }
 
     return swscanf(optarg, L"%dx%d", width, height) == 2;
@@ -149,7 +154,7 @@ static std::vector<int> parse_optarg_int_array(const char *optarg)
     return array;
 }
 
-static bool parse_optarg_resize(const char *optarg, int *width, int *height, int *mode)
+static bool parse_optarg_resize(const char *optarg, int *width, int *height, int *mode, bool hasCustomWidth = false)
 {
     *mode = 0; // default
 
@@ -173,7 +178,10 @@ static bool parse_optarg_resize(const char *optarg, int *width, int *height, int
             return false;
         }
     }
-
+    if (hasCustomWidth)
+    {
+        return sscanf(optarg, "%d", width) == 1;
+    }
     return sscanf(optarg, "%dx%d", width, height) == 2;
 }
 
@@ -196,6 +204,7 @@ static void print_usage()
     fprintf(stderr, "  -z model-scale       scale according to the model (can be 2, 3, 4. default=4)\n");
     fprintf(stderr, "  -s output-scale      custom output scale (can be 2, 3, 4. default=4)\n");
     fprintf(stderr, "  -r resize            resize output to dimension (default=WxH:default), use '-r help' for more details\n");
+    fprintf(stderr, "  -w width             resize output to a width (default=W:default), use '-r help' for more details\n");
     fprintf(stderr, "  -c compress          compression of the output image, default 0 and varies to 100\n");
     fprintf(stderr, "  -t tile-size         tile size (>=32/0=auto, default=0) can be 0,0,0 for multi-gpu\n");
     fprintf(stderr, "  -m model-path        folder path to the pre-trained models. default=models\n");
@@ -212,7 +221,8 @@ static void print_resize_usage()
     printf("'-r widthxheight:filter' argument usage:\n\n");
 
     printf("For example '-r 1920x1080' or '-r 1920x1080:default' will force all output images to be\n");
-    printf("resized to 1920x1080 with the default filter if they aren't already.\n\n");
+    printf("resized to 1920x1080 with the default filter if they aren't already.\n");
+    printf("Similarly, '-w 1920' will force all output images to be resized to a width of 1920.\n\n");
 
     printf("Avaliable filters:\n");
     printf("  default       - Automatically decide\n");
@@ -391,7 +401,7 @@ void *load(void *args)
                 path_t output_filename2 = get_file_name_without_extension(ltp->output_files[i]) + PATHSTR('.') + ext;
                 v.outpath = output_filename2;
 #if _WIN32
-                fwprintf(stderr, L"image %ls has alpha channel ! %ls will output %ls\n", imagepath.c_str(), imagepath.c_str(), output_filename2.c_str());
+                fwprintf(stderr, L"ℹ️ Info: Image %s has alpha channel!\n", imagepath.c_str(), imagepath.c_str(), output_filename2.c_str());
 #else  // _WIN32
                 fprintf(stderr, "ℹ️ Info: Image %s has alpha channel!\n", imagepath.c_str(), imagepath.c_str(), output_filename2.c_str());
 #endif // _WIN32
@@ -402,7 +412,7 @@ void *load(void *args)
         else
         {
 #if _WIN32
-            fwprintf(stderr, L"decode image %ls failed\n", imagepath.c_str());
+            fwprintf(stderr, L"🚨 Error: Couldn't read the image '%s'!\n", imagepath.c_str());
 #else  // _WIN32
             fprintf(stderr, "🚨 Error: Couldn't read the image '%s'!\n", imagepath.c_str());
 #endif // _WIN32
@@ -456,13 +466,21 @@ public:
 void resize_output_image(Task &v, const SaveThreadParams *stp)
 {
     const int resizeWidth = stp->resizeWidth;
-    const int resizeHeight = stp->resizeHeight;
+    int resizeHeight = stp->resizeHeight;
     const bool resizeProvided = stp->resizeProvided;
 
-    if (!resizeProvided || (v.outimage.w == resizeWidth && v.outimage.h == resizeHeight))
+    if (!resizeProvided ||
+        (v.outimage.w == resizeWidth && v.outimage.h == resizeHeight) || (!resizeHeight && v.outimage.w == resizeWidth))
     {
         fprintf(stderr, "⏩ Skipping resize\n");
         return;
+    }
+
+    // Calculate the resize height if not provided
+    if (!resizeHeight)
+    {
+        resizeHeight = v.inimage.h * resizeWidth / v.inimage.w;
+        fprintf(stderr, "🧮 Calculated height from width: %d\n", resizeHeight);
     }
 
     fprintf(stderr, "🏞️ Resizing image according to desired resolution\n");
@@ -600,9 +618,9 @@ void *save(void *args)
             if (verbose)
             {
 #if _WIN32
-                fwprintf(stderr, L"%ls -> %ls done\n", v.inpath.c_str(), v.outpath.c_str());
+                fwprintf(stderr, L"✅ %ls -> %ls done\n", v.inpath.c_str(), v.outpath.c_str());
 #else
-                fprintf(stderr, "%s -> %s done\n", v.inpath.c_str(), v.outpath.c_str());
+                fprintf(stderr, "✅ %s -> %s done\n", v.inpath.c_str(), v.outpath.c_str());
 #endif
             }
         }
@@ -635,6 +653,7 @@ int main(int argc, char **argv)
     bool hasOutputScale = false;
     float compression = 0.00f;
     bool resizeProvided = false;
+    bool hasCustomWidth = false;
     std::vector<int> tilesize;
     path_t model = PATHSTR("models");
     path_t modelname = PATHSTR("realesrgan-x4plus");
@@ -649,7 +668,7 @@ int main(int argc, char **argv)
 #if _WIN32
     setlocale(LC_ALL, "");
     wchar_t opt;
-    while ((opt = getopt(argc, argv, L"i:o:z:s:r:t:c:m:n:g:j:f:vxh")) != (wchar_t)-1)
+    while ((opt = getopt(argc, argv, L"i:o:z:s:r:w:t:c:m:n:g:j:f:vxh")) != (wchar_t)-1)
     {
         switch (opt)
         {
@@ -670,7 +689,7 @@ int main(int argc, char **argv)
             compression = _wtof(optarg);
             if (compression < 0 || compression > 100)
             {
-                fprintf(stderr, "invalid compression argument, should be between 0 and 100\n");
+                fwprintf(stderr, "🚨 Error: Invalid compression value, it should be between 0 and 100!\n");
                 return -1;
             }
             compression = round(compression / 10.0) * 10;
@@ -683,7 +702,20 @@ int main(int argc, char **argv)
             }
             if (!parse_optarg_resize(optarg, &resizeWidth, &resizeHeight, &resizeMode))
             {
-                fwprintf(stderr, L"invalid resize argument\n");
+                fwprintf(stderr, L"🚨 Error: Invalid resize value!\n");
+                return -1;
+            }
+            resizeProvided = true;
+            break;
+        case L'w':
+            if (wcscmp(optarg, L"help") == 0)
+            {
+                print_resize_usage();
+                return -1;
+            }
+            if (!parse_optarg_resize(optarg, &resizeWidth, &resizeHeight, &resizeMode, true))
+            {
+                fwprintf(stderr, L"🚨 Error: Invalid resize value!\n");
                 return -1;
             }
             resizeProvided = true;
@@ -755,6 +787,19 @@ int main(int argc, char **argv)
                 return -1;
             }
             if (!parse_optarg_resize(optarg, &resizeWidth, &resizeHeight, &resizeMode))
+            {
+                fprintf(stderr, "🚨 Error: Invalid resize value!\n");
+                return -1;
+            }
+            resizeProvided = true;
+            break;
+        case 'w':
+            if (strcmp(optarg, "help") == 0)
+            {
+                print_resize_usage();
+                return -1;
+            }
+            if (!parse_optarg_resize(optarg, &resizeWidth, &resizeHeight, &resizeMode, true))
             {
                 fprintf(stderr, "🚨 Error: Invalid resize value!\n");
                 return -1;
@@ -892,7 +937,7 @@ int main(int argc, char **argv)
                 {
                     path_t output_filename2 = filename + PATHSTR('.') + format;
 #if _WIN32
-                    fwprintf(stderr, L"both %ls and %ls output %ls ! %ls will output %ls\n", filename.c_str(), last_filename.c_str(), output_filename.c_str(), filename.c_str(), output_filename2.c_str());
+                    fwprintf(stderr, L"⚠️ Warning: both %s and %s output %s! %s will output %s\n", filename.c_str(), last_filename.c_str(), output_filename.c_str(), filename.c_str(), output_filename2.c_str());
 #else
                     fprintf(stderr, "⚠️ Warning: both %s and %s output %s! %s will output %s\n", filename.c_str(), last_filename.c_str(), output_filename.c_str(), filename.c_str(), output_filename2.c_str());
 #endif
