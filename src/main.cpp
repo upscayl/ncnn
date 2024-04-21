@@ -689,7 +689,7 @@ int main(int argc, char **argv)
             compression = _wtof(optarg);
             if (compression < 0 || compression > 100)
             {
-                fwprintf(stderr, "🚨 Error: Invalid compression value, it should be between 0 and 100!\n");
+                fwprintf(stderr, L"🚨 Error: Invalid compression value, it should be between 0 and 100!\n");
                 return -1;
             }
             compression = round(compression / 10.0) * 10;
