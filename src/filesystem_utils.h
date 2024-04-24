@@ -201,7 +201,6 @@ static bool filepath_is_readable(const path_t &path)
 
 static path_t sanitize_filepath(const path_t &path)
 {
-    fprintf(stderr, "path: %s\n", path.c_str());
     if (filepath_is_readable(path))
         return path;
 
