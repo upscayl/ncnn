@@ -91,7 +91,7 @@ int RealESRGAN::load(const std::string &parampath, const std::string &modelpath)
         FILE *fp = _wfopen(parampath.c_str(), L"rb");
         if (!fp)
         {
-            fwprintf(stderr, L"_wfopen %ls failed\n", parampath.c_str());
+            fwprintf(stderr, L"🚨 Error: Failed to open %ls\n", parampath.c_str());
         }
 
         net.load_param(fp);
@@ -102,7 +102,7 @@ int RealESRGAN::load(const std::string &parampath, const std::string &modelpath)
         FILE *fp = _wfopen(modelpath.c_str(), L"rb");
         if (!fp)
         {
-            fwprintf(stderr, L"_wfopen %ls failed\n", modelpath.c_str());
+            fwprintf(stderr, L"🚨 Error: Failed to open %ls\n", modelpath.c_str());
         }
 
         net.load_model(fp);
@@ -552,6 +552,8 @@ int RealESRGAN::process(const ncnn::Mat &inimage, ncnn::Mat &outimage) const
 
             fprintf(stderr, "%.2f%%\n", (float)(yi * xtiles + xi) / (ytiles * xtiles) * 100);
         }
+
+        fprintf(stderr, "100.00%%\n");
 
         // download
         {

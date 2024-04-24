@@ -61,7 +61,7 @@ static int list_directory(const path_t &dirpath, std::vector<path_t> &imagepaths
     _WDIR *dir = _wopendir(dirpath.c_str());
     if (!dir)
     {
-        fwprintf(stderr, L"opendir failed %ls\n", dirpath.c_str());
+        fwprintf(stderr, L"🚨 Error: Failed to open directory - %ls\n", dirpath.c_str());
         return -1;
     }
 
@@ -75,12 +75,12 @@ static int list_directory(const path_t &dirpath, std::vector<path_t> &imagepaths
         std::wstring wfilename(ent->d_name);
         std::string filename(wfilename.begin(), wfilename.end());
 
-        fprintf(stderr, "filename: %s\n", filename.c_str());
+        // fprintf(stderr, "filename: %s\n", filename.c_str());
 
         // Check if the file is an image
         if (is_image_file(filename))
         {
-            fprintf(stderr, "good filename: %s\n", filename.c_str());
+            // fprintf(stderr, "good filename: %s\n", filename.c_str());
             imagepaths.push_back(path_t(wfilename));
         }
     }
@@ -106,7 +106,7 @@ static int list_directory(const path_t &dirpath, std::vector<path_t> &imagepaths
     DIR *dir = opendir(dirpath.c_str());
     if (!dir)
     {
-        fprintf(stderr, "opendir failed %s\n", dirpath.c_str());
+        fprintf(stderr, "🚨 Error: Failed to open directory - %s\n", dirpath.c_str());
         return -1;
     }
 

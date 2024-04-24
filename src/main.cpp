@@ -574,7 +574,7 @@ void *save(void *args)
         fs::path fs_path = fs::absolute(v.outpath);
         std::wstring parent_path = fs_path.parent_path().wstring();
 
-        fprintf(stderr, "100.00%%\n");
+        // fprintf(stderr, "\n100.00%%\n");
 
         if (!fs::exists(parent_path))
         {
