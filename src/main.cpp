@@ -1037,10 +1037,10 @@ int main(int argc, char **argv)
         fprintf(stderr, "✨ Detected scale x16\n");
         scale = 16;
     }
-    else
+
+    if (scale == 4)
     {
-        fprintf(stderr, "🚨 Error: The model name doesn't contain scale. Please make sure that the model name contains x2, x3, x4, etc. or 2x, x3, x4, etc.\n");
-        return -1;
+        fprintf(stderr, "✨ Using the default scale x4\n");
     }
 
     if (modelname == PATHSTR("realesr-animevideov3"))
