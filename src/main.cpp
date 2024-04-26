@@ -459,6 +459,7 @@ public:
     bool resizeProvided;
     int outputScale;
     bool hasOutputScale;
+    bool hasCustomWidth;
     float compression;
     int verbose;
 };
@@ -468,22 +469,35 @@ void resize_output_image(Task &v, const SaveThreadParams *stp)
     const int resizeWidth = stp->resizeWidth;
     int resizeHeight = stp->resizeHeight;
     const bool resizeProvided = stp->resizeProvided;
+    const bool hasCustomWidth = stp->hasCustomWidth;
 
-    if (!resizeProvided ||
-        (v.outimage.w == resizeWidth && v.outimage.h == resizeHeight) || (!resizeHeight && v.outimage.w == resizeWidth))
+    if ((!resizeProvided && !hasCustomWidth) ||
+        (v.outimage.w == resizeWidth && v.outimage.h == resizeHeight) || (!resizeHeight && hasCustomWidth && v.outimage.w == resizeWidth))
     {
+#if _WIN32
+        fwprintf(stderr, L"⏩ Skipping resize\n");
+#else  // _WIN32
         fprintf(stderr, "⏩ Skipping resize\n");
+#endif // _WIN32
         return;
     }
 
     // Calculate the resize height if not provided
-    if (!resizeHeight)
+    if (hasCustomWidth)
     {
-        resizeHeight = v.inimage.h * resizeWidth / v.inimage.w;
+        resizeHeight = (v.inimage.h * resizeWidth) / v.inimage.w;
+#if _WIN32
+        fwprintf(stderr, L"🧮 Calculated height from width: %d\n", resizeHeight);
+#else  // _WIN32
         fprintf(stderr, "🧮 Calculated height from width: %d\n", resizeHeight);
+#endif // _WIN32
     }
 
+#if _WIN32
+    fwprintf(stderr, L"🏞️ Resizing image according to desired resolution\n");
+#else  // _WIN32
     fprintf(stderr, "🏞️ Resizing image according to desired resolution\n");
+#endif // _WIN32
 
     int c = v.outimage.elempack;
 
@@ -498,7 +512,11 @@ void resize_output_image(Task &v, const SaveThreadParams *stp)
     // Replace the old image data with the new (resized) image data
     v.outimage = ncnn::Mat(resizeWidth, resizeHeight, resizedData, (size_t)c, c);
 
+#if _WIN32
+    fwprintf(stderr, L"🏞️ Resized image from %dx%d to %dx%d\n", v.inimage.w, v.inimage.h, v.outimage.w, v.outimage.h);
+#else  // _WIN32
     fprintf(stderr, "🏞️ Resized image from %dx%d to %dx%d\n", v.inimage.w, v.inimage.h, v.outimage.w, v.outimage.h);
+#endif // _WIN32
 }
 
 void scale_output_image(Task &v, const SaveThreadParams *stp)
@@ -509,20 +527,31 @@ void scale_output_image(Task &v, const SaveThreadParams *stp)
     const int outputScale = stp->outputScale;
     const int outputWidth = originalWidth * outputScale;
     const int outputHeight = originalHeight * outputScale;
+    const bool resizeProvided = stp->resizeProvided;
+    const bool hasCustomWidth = stp->hasCustomWidth;
 
-    if (!hasOutputScale)
+    if (!hasOutputScale || resizeProvided || hasCustomWidth)
         return;
 
     int c = v.outimage.elempack;
 
+#if _WIN32
+    fwprintf(stderr, L"🏞️ Resizing image according to output scale\n");
+#else  // _WIN32
     fprintf(stderr, "🏞️ Resizing image according to output scale\n");
+#endif // _WIN32
 
     stbir_pixel_layout layout = static_cast<stbir_pixel_layout>(c);
     // Create a new buffer for the resized image
     unsigned char *resizedData = (unsigned char *)malloc(outputWidth * outputHeight * c);
     stbir_resize_uint8_srgb((unsigned char *)v.outimage.data, v.outimage.w, v.outimage.h, 0, resizedData, outputWidth, outputHeight, 0, layout);
     v.outimage = ncnn::Mat(outputWidth, outputHeight, resizedData, (size_t)v.outimage.elemsize, v.outimage.elemsize);
-    fprintf(stderr, "🏞️ Resized image from %dx%d to %dx%d\n", originalWidth, originalHeight, outputWidth, outputHeight);
+
+#if _WIN32
+    fwprintf(stderr, L"🏞️ Resized image from %dx%d to %dx%d\n", originalWidth, originalHeight, outputWidth, outputHeight);
+#else  // _WIN32
+    fprintf(stderr, "🏞️ Scaled image from %dx%d to %dx%d\n", originalWidth, originalHeight, outputWidth, outputHeight);
+#endif // _WIN32
 }
 
 void *save(void *args)
@@ -718,7 +747,7 @@ int main(int argc, char **argv)
                 fwprintf(stderr, L"🚨 Error: Invalid resize value!\n");
                 return -1;
             }
-            resizeProvided = true;
+            hasCustomWidth = true;
             break;
         case L't':
             tilesize = parse_optarg_int_array(optarg);
@@ -804,7 +833,7 @@ int main(int argc, char **argv)
                 fprintf(stderr, "🚨 Error: Invalid resize value!\n");
                 return -1;
             }
-            resizeProvided = true;
+            hasCustomWidth = true;
             break;
         case 't':
             tilesize = parse_optarg_int_array(optarg);
@@ -1180,6 +1209,7 @@ int main(int argc, char **argv)
             stp.compression = compression;
             stp.outputScale = outputScale;
             stp.hasOutputScale = hasOutputScale;
+            stp.hasCustomWidth = hasCustomWidth;
 
             std::vector<ncnn::Thread *> save_threads(jobs_save);
             for (int i = 0; i < jobs_save; i++)

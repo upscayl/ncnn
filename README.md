@@ -5,8 +5,8 @@
 - `cmake`
 - `gcc-9` and `g++-9`
 - `Vulkan SDK`
-  - Download a Vulkan SDK tarball from [https://vulkan.lunarg.com/sdk/home](https://vulkan.lunarg.com/sdk/home) and extract it using:\
-     `tar -xf vulkansdk-linux-x86_64-1.3.261.0.tar.xz`
+  - Download the latest Vulkan SDK tarball from [https://vulkan.lunarg.com/sdk/home](https://vulkan.lunarg.com/sdk/home) and extract it using:\
+     `wget https://sdk.lunarg.com/sdk/download/1.3.280.1/linux/vulkansdk-linux-x86_64-1.3.280.1.tar.xz && tar -xf vulkansdk-linux-x86_64-1.3.280.1.tar.xz && rm vulkansdk-linux-x86_64-1.3.280.1.tar.xz`
 
 ### Steps:
 
@@ -14,10 +14,10 @@
 
    `git clone --recursive git@github.com:upscayl/upscayl-ncnn.git`
 
-   `cd upscayl-ncnn`
+   `cd upscayl-ncnn` or if you've already cloned: `git submodule update --init --recursive`
 
 2. Set up environment variables: `export CC="gcc-9" CXX="g++-9" `
-3. `export VULKAN_SDK=/path` where you extracted your vulkan SDK/1.3.261.0/x86_64
+3. `export VULKAN_SDK=/path` where you extracted your vulkan SDK -> 1.3.280.1/x86_64
 4. Make a new build directory and cd into it: `mkdir build && cd build`
 5. Now, build : `cmake ../src`
 6. `cmake --build . -j 2` Replace the `-j 2` with the number of cores you want to use to compile

@@ -1,5 +1,5 @@
 {
-  "cmake.sourceDirectory": "/Users/macbook-air/Public/upscayl-ncnn/src",
+  "cmake.sourceDirectory": "/home/mayank/Public/upscayl-ncnn/src",
   "files.associations": {
     "*.jsx": "javascriptreact",
     ".env.local": "dotenv",

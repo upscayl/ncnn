@@ -46,3 +46,6 @@ libwebp/
 images_out/*
 output/
 .DS_Store
+
+*.tar.xz
+upscayl-bin

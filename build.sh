@@ -3,7 +3,14 @@
 # Get argument for platform
 PLATFORM=$1
 
-cd build-$PLATFORM
+if [ $PLATFORM == "arm64"]; then
+	mkdir build
+	mkdir build-$PLATFORM
+	cd build-$PLATFORM
+else
+	mkdir build
+	cd build
+fi
 
 # IF arm64
 if [ $PLATFORM == "arm64" ]; then
@@ -21,7 +28,11 @@ if [ $PLATFORM == "arm64" ]; then
 		 -D Vulkan_LIBRARY=../vulkan-sdk/macOS/lib/MoltenVK.xcframework/macos-arm64_x86_64/libMoltenVK.a \
 		../src ;
 		cmake --build .;
-else
+elif [ $PLATFORM == "linux" ]; then
+		# Run upscayl-bin
+		cmake -D Vulkan_INCLUDE_DIR="../vulkan-sdk/x86_64/include" \
+		../src ;
+		cmake --build .;
 		# Run upscayl-bin
 		echo "Building for other platforms needs to be added to build.sh"
 fi
