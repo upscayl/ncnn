@@ -590,7 +590,7 @@ void *save(void *args)
             scale_output_image(v, stp);
         }
 
-        if (stp->resizeProvided && !stp->hasOutputScale)
+        if ((stp->resizeProvided || stp->hasCustomWidth) && !stp->hasOutputScale)
         {
             resize_output_image(v, stp);
         }
