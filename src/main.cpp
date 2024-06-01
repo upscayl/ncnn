@@ -607,8 +607,6 @@ void *save(void *args)
         std::string parent_path = fs_path.parent_path().string();
 #endif
 
-        // fprintf(stderr, "\n100.00%%\n");
-
         if (!fs::exists(parent_path))
         {
             fprintf(stderr, "📂 Creating directory: %s\n", parent_path.c_str());
@@ -646,7 +644,8 @@ void *save(void *args)
         }
         if (success)
         {
-            fprintf(stderr, "🙌 Upscayled Successfully!\n");
+            fprintf(stderr, "100.00%\n");
+            fprintf(stderr, "\n🙌 Upscayled Successfully!\n");
 
             if (verbose)
             {

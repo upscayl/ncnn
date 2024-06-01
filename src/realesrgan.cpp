@@ -553,8 +553,6 @@ int RealESRGAN::process(const ncnn::Mat &inimage, ncnn::Mat &outimage) const
             fprintf(stderr, "%.2f%%\n", (float)(yi * xtiles + xi) / (ytiles * xtiles) * 100);
         }
 
-        fprintf(stderr, "100.00%%\n");
-
         // download
         {
             ncnn::Mat out;
