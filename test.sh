@@ -4,6 +4,11 @@
 PLATFORM=$1
 # Get argument for folder or file upscale
 TYPE=$2
+BUILD=$3
+
+if [ $BUILD == "build" ]; then
+	./build.sh $PLATFORM
+fi
 
 if [ $PLATFORM == "arm64" ]; then
 	BIN_PATH="time build-$PLATFORM/upscayl-bin"

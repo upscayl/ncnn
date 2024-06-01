@@ -401,9 +401,9 @@ void *load(void *args)
                 path_t output_filename2 = get_file_name_without_extension(ltp->output_files[i]) + PATHSTR('.') + ext;
                 v.outpath = output_filename2;
 #if _WIN32
-                fwprintf(stderr, L"ℹ️ Info: Image %s has alpha channel!\n", imagepath.c_str(), imagepath.c_str(), output_filename2.c_str());
+                fwprintf(stderr, L"ℹ️ Info: Image %s has alpha channel!\n", imagepath.c_str());
 #else  // _WIN32
-                fprintf(stderr, "ℹ️ Info: Image %s has alpha channel!\n", imagepath.c_str(), imagepath.c_str(), output_filename2.c_str());
+                fprintf(stderr, "ℹ️ Info: Image %s has alpha channel!\n", imagepath.c_str());
 #endif // _WIN32
             }
 
@@ -601,13 +601,17 @@ void *save(void *args)
 
         /* ----------- Create folder if not exists -------------------*/
         fs::path fs_path = fs::absolute(v.outpath);
+#if _WIN32
         std::wstring parent_path = fs_path.parent_path().wstring();
+#else
+        std::string parent_path = fs_path.parent_path().string();
+#endif
 
         // fprintf(stderr, "\n100.00%%\n");
 
         if (!fs::exists(parent_path))
         {
-            fprintf(stderr, "📂 Creating directory: %ls\n", parent_path.c_str());
+            fprintf(stderr, "📂 Creating directory: %s\n", parent_path.c_str());
             fs::create_directories(parent_path);
         }
 
@@ -672,6 +676,7 @@ int wmain(int argc, wchar_t **argv)
 int main(int argc, char **argv)
 #endif
 {
+    setlocale(LC_ALL, "");
     path_t inputpath;
     path_t outputpath;
     int scale = 4;
